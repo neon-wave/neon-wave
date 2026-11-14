@@ -484,6 +484,39 @@
         -webkit-backdrop-filter: blur(4px);
       }
 
+      /* ---------- Rotate your phone overlay ---------- */
+      #rotateOverlay {
+        position: fixed; inset: 0; z-index: 90;
+        display: flex; align-items: center; justify-content: center;
+        padding: 20px;
+        background: rgba(3, 0, 10, .88);
+        backdrop-filter: blur(7px);
+        -webkit-backdrop-filter: blur(7px);
+        text-align: center;
+      }
+      .rotateCard { max-width: 340px; }
+      .rotateIco {
+        width: 104px; height: 104px; margin: 0 auto 4px;
+        color: var(--th-a);
+        filter: drop-shadow(0 0 14px rgba(var(--th-a-rgb),.8));
+        transform-origin: 50% 50%;
+        animation: rotateHint 2.4s ease-in-out infinite;
+      }
+      @keyframes rotateHint {
+        0%, 55%, 100% { transform: rotate(0deg); }
+        25%, 40% { transform: rotate(90deg); }
+      }
+      .rotateTitle {
+        font-family: "Orbitron", monospace; font-weight: 900;
+        font-size: clamp(24px, 7vw, 32px); letter-spacing: .04em;
+        color: #fff; margin: 10px 0 8px;
+        text-shadow: 0 0 14px rgba(var(--th-a-rgb),.8), 0 2px 8px rgba(0,0,0,.6);
+      }
+      .rotateText {
+        color: rgba(255,255,255,.85); font-size: 16px; line-height: 1.45;
+        margin: 0 0 22px;
+      }
+
       /* ---------- Shop ---------- */
       #shop {
         position: fixed; inset: 0; z-index: 30;
@@ -779,6 +812,7 @@
       }
       @media (prefers-reduced-motion: reduce) {
         .panel { animation: none; }
+        .rotateIco { animation: none; }
         .btn, .lvlBtn, .shopCell, .shopTab, .packRow, .iconBtn, .toggleBtn { transition: none; }
       }
 
@@ -882,6 +916,22 @@
           spikes — and dodge spinning saws, saw tunnels, staircase tunnels, spiked pillars and
           honeycomb blocks. In Endless, every zone brings a new color — and a new kind of trouble.
         </div>
+      </div>
+    </div>
+
+    <!-- ROTATE YOUR PHONE — shown on phones/tablets held in portrait
+         while on the menu; the game is designed for landscape. -->
+    <div id="rotateOverlay" class="hidden" role="dialog" aria-modal="true" aria-label="Rotate your phone">
+      <div class="rotateCard">
+        <svg class="rotateIco" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="25" y="16" width="14" height="32" rx="3.5"/>
+          <line x1="29.5" y1="43" x2="34.5" y2="43"/>
+          <path d="M48 21a20 20 0 1 0 4 19"/>
+          <path d="M44 32l8 8-9 1"/>
+        </svg>
+        <h2 class="rotateTitle">Rotate your phone</h2>
+        <p class="rotateText">Turn your device sideways for the best Neon Wave experience.</p>
+        <button class="btn" id="rotatePlayBtn" type="button">Play anyway</button>
       </div>
     </div>
 
@@ -1008,7 +1058,7 @@
          ============================================================ */
       var CONFIG = {
         firebase: {
-          apiKey: "AIzaSyCM7kTV9Y5G03nzfDcO0on4_9jQk1KdAcE",
+          apiKey: "AIzaSyCM7kTV9Y5G03nzfDcOOon4_9jQklKdAcE",
           authDomain: "neon-wave-c09bd.firebaseapp.com",
           projectId: "neon-wave-c09bd",
           storageBucket: "neon-wave-c09bd.firebasestorage.app",
@@ -4305,8 +4355,61 @@
         else if (!shopEl.classList.contains('hidden')) closeShop();
       });
 
-      document.getElementById('playBtn').addEventListener('click', function () { startRun(Math.min(unlocked, LEVELS.length - 1), 'classic'); });
-      document.getElementById('endlessBtn').addEventListener('click', function () { startRun(0, 'endless'); });
+      /* ---------------- Rotate-your-phone overlay ----------------
+         Neon Wave is a landscape game. On a phone or tablet held in
+         portrait, a friendly overlay covers the menu and asks the
+         player to rotate; it hides itself in landscape and comes
+         back if they rotate to portrait again while on the menu.
+         "Play anyway" dismisses it until the device next reaches
+         landscape. Tapping PLAY, ENDLESS or "Play anyway" also makes
+         a best-effort attempt at fullscreen + landscape orientation
+         lock — every failure (iOS Safari has no orientation lock,
+         some webviews refuse fullscreen) is swallowed silently and
+         never blocks play. */
+      var rotateOverlayEl = document.getElementById('rotateOverlay');
+      var rotateDismissed = false;
+      function isTouchDevice() {
+        try {
+          return !!((window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window));
+        } catch (e) { return false; }
+      }
+      function isPortraitNow() { return window.innerHeight > window.innerWidth; }
+      function updateRotateOverlay() {
+        if (!isPortraitNow()) rotateDismissed = false;
+        var onMenu = state === 'menu' && !menuEl.classList.contains('hidden')
+          && shopEl.classList.contains('hidden') && gemStoreEl.classList.contains('hidden') && redeemEl.classList.contains('hidden');
+        var show = onMenu && isTouchDevice() && isPortraitNow() && !rotateDismissed;
+        rotateOverlayEl.classList.toggle('hidden', !show);
+      }
+      function tryLockLandscape() {
+        try {
+          var lock = function () {
+            try {
+              if (screen.orientation && screen.orientation.lock) {
+                var p = screen.orientation.lock('landscape');
+                if (p && p.catch) p.catch(function () {});
+              }
+            } catch (e) {}
+          };
+          var fs = null;
+          try {
+            if (document.documentElement.requestFullscreen) fs = document.documentElement.requestFullscreen();
+          } catch (e) { fs = null; }
+          if (fs && fs.then) fs.then(lock, lock); else lock();
+        } catch (e) {}
+      }
+      document.getElementById('rotatePlayBtn').addEventListener('click', function () {
+        rotateDismissed = true;
+        rotateOverlayEl.classList.add('hidden');
+        tryLockLandscape();
+      });
+      window.addEventListener('resize', updateRotateOverlay);
+      window.addEventListener('orientationchange', updateRotateOverlay);
+      setInterval(updateRotateOverlay, 700);
+      updateRotateOverlay();
+
+      document.getElementById('playBtn').addEventListener('click', function () { tryLockLandscape(); startRun(Math.min(unlocked, LEVELS.length - 1), 'classic'); });
+      document.getElementById('endlessBtn').addEventListener('click', function () { tryLockLandscape(); startRun(0, 'endless'); });
       document.getElementById('practiceBtn').addEventListener('click', function () {
         practice = !practice;
         this.classList.toggle('on', practice);
