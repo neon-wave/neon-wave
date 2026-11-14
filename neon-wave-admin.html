@@ -1,0 +1,1739 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="data:," />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#0f292f" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Neon Wave Admin" />
+    <link rel="apple-touch-icon" href="media-generation-icon-512-0-1f86683d-708b-451d-9ffb-2d69653be69f.png" />
+    <title>Neon Wave Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0a0616;
+        --bg-deep: #06030d;
+        --panel: rgba(24, 14, 46, 0.78);
+        --panel-solid: #150b2c;
+        --line: rgba(160, 130, 255, 0.22);
+        --line-soft: rgba(160, 130, 255, 0.12);
+        --ink: #f3eeff;
+        --muted: #b3a6d9;
+        --faint: #7e6fa8;
+        --pink: #ff2d95;
+        --pink-soft: rgba(255, 45, 149, 0.14);
+        --teal: #14a098;
+        --teal-bright: #2fe6cf;
+        --gold: #ffd23e;
+        --danger: #ff5470;
+        --ok: #3ddc97;
+        --radius: 14px;
+      }
+      html { scroll-behavior: smooth; }
+      [hidden] { display: none !important; }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(900px 480px at 85% -120px, rgba(255, 45, 149, 0.13), transparent 60%),
+          radial-gradient(800px 500px at -10% 30%, rgba(20, 160, 152, 0.10), transparent 60%),
+          linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+        background-attachment: fixed;
+        color: var(--ink);
+        font-family: "Rajdhani", "Segoe UI", system-ui, sans-serif;
+        font-size: 17px;
+        line-height: 1.45;
+        min-height: 100vh;
+      }
+      h1, h2, h3 { font-family: "Orbitron", "Rajdhani", sans-serif; margin: 0; }
+      p { margin: 0; }
+      button, input, select { font: inherit; color: inherit; }
+      button, select, input:not([type="checkbox"]) { min-height: 2.4rem; }
+      :focus-visible { outline: 2px solid var(--teal-bright); outline-offset: 2px; }
+
+      /* ---------- Buttons & fields ---------- */
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
+        padding: 0.45rem 1.05rem; border-radius: 10px; cursor: pointer;
+        border: 1px solid var(--line); background: rgba(46, 28, 84, 0.65);
+        color: var(--ink); font-weight: 700; letter-spacing: 0.03em;
+        transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      }
+      .btn:hover { border-color: rgba(255, 45, 149, 0.55); }
+      .btn:active { transform: translateY(1px); }
+      .btn:disabled { opacity: 0.55; cursor: wait; }
+      .btn-primary {
+        background: linear-gradient(135deg, #ff2d95, #c2187a);
+        border-color: rgba(255, 120, 190, 0.6); color: #fff;
+        box-shadow: 0 4px 18px rgba(255, 45, 149, 0.30);
+      }
+      .btn-teal {
+        background: linear-gradient(135deg, #17bdb0, #0d7a72);
+        border-color: rgba(47, 230, 207, 0.5); color: #fff;
+        box-shadow: 0 4px 16px rgba(20, 160, 152, 0.28);
+      }
+      .btn-danger { border-color: rgba(255, 84, 112, 0.55); color: #ffb3c0; background: rgba(90, 16, 34, 0.45); }
+      .btn-small { min-height: 2.25rem; padding: 0.25rem 0.8rem; font-size: 0.95rem; }
+      .field {
+        width: 100%; padding: 0.5rem 0.75rem; border-radius: 10px;
+        background: rgba(8, 4, 20, 0.75); border: 1px solid var(--line);
+      }
+      .field::placeholder { color: var(--faint); }
+      label.flabel { display: block; font-weight: 700; font-size: 0.92rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; }
+      .status { min-height: 1.4em; font-weight: 600; margin-top: 0.7rem; }
+      .status.ok { color: var(--ok); }
+      .status.err { color: var(--danger); }
+      .status.info { color: var(--muted); }
+
+      /* ---------- Gate (login) ---------- */
+      .gate-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.25rem; }
+      .gate-card {
+        width: 100%; max-width: 430px; padding: 2rem 1.6rem;
+        background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
+        backdrop-filter: blur(10px); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+      }
+      .gate-card h1 { font-size: 1.55rem; letter-spacing: 0.06em; }
+      .gate-card h1 .nw-pink { color: var(--pink); }
+      .gate-card h1 .nw-teal { color: var(--teal-bright); }
+      .gate-sub { color: var(--muted); margin: 0.55rem 0 1.4rem; }
+      .gate-card form { display: grid; gap: 0.9rem; }
+      .gate-note { color: var(--faint); font-size: 0.92rem; margin-top: 1.1rem; }
+
+      /* ---------- App frame ---------- */
+      .topbar {
+        position: sticky; top: 0; z-index: 40;
+        background: rgba(10, 6, 22, 0.88); backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar-in {
+        max-width: 1060px; margin: 0 auto; padding: 0.55rem 1rem;
+        display: flex; align-items: center; gap: 0.4rem 1rem; flex-wrap: wrap;
+      }
+      .brand { font-family: "Orbitron", sans-serif; font-weight: 800; font-size: 0.98rem; letter-spacing: 0.07em; margin-right: 0.4rem; }
+      .brand .nw-pink { color: var(--pink); }
+      .brand .nw-teal { color: var(--teal-bright); }
+      .brand .admin-tag { color: var(--gold); font-size: 0.72rem; vertical-align: super; letter-spacing: 0.14em; }
+      nav.sections { display: flex; flex-wrap: wrap; gap: 0.2rem; }
+      nav.sections a {
+        color: var(--muted); text-decoration: none; font-weight: 700; letter-spacing: 0.04em;
+        padding: 0.5rem 0.7rem; border-radius: 8px; min-height: 2.25rem; display: inline-flex; align-items: center;
+      }
+      nav.sections a:hover { color: var(--ink); background: rgba(255, 45, 149, 0.12); }
+      .topbar .spacer { flex: 1; }
+      main { max-width: 1060px; margin: 0 auto; padding: 1.4rem 1rem 3.5rem; display: grid; gap: 1.6rem; }
+      section.panel {
+        background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+        padding: 1.3rem 1.3rem 1.45rem; backdrop-filter: blur(8px);
+        box-shadow: 0 10px 34px rgba(0, 0, 0, 0.38); scroll-margin-top: 84px;
+      }
+      .sec-head { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+      .sec-head h2 { font-size: 1.18rem; letter-spacing: 0.05em; }
+      .sec-head .sec-sub { color: var(--muted); width: 100%; }
+      .sec-head .spacer { flex: 1; }
+
+      /* ---------- Stats ---------- */
+      .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.9rem; margin-top: 0.9rem; }
+      .stat-card {
+        background: rgba(10, 5, 24, 0.65); border: 1px solid var(--line-soft); border-radius: 12px;
+        padding: 1rem 1.1rem;
+      }
+      .stat-card .stat-label { color: var(--muted); font-weight: 700; font-size: 0.9rem; letter-spacing: 0.07em; text-transform: uppercase; }
+      .stat-card .stat-num { font-family: "Orbitron", sans-serif; font-weight: 800; font-size: 2rem; line-height: 1.15; margin-top: 0.2rem; }
+      .stat-card.pink .stat-num { color: var(--pink); }
+      .stat-card.teal .stat-num { color: var(--teal-bright); }
+      .stat-card.gold .stat-num { color: var(--gold); }
+      .country-list { margin-top: 1.1rem; display: grid; gap: 0.45rem; }
+      .country-list h3 { font-size: 0.95rem; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 0.2rem; }
+      .country-row { display: grid; grid-template-columns: 3.2rem 1fr auto; align-items: center; gap: 0.7rem; }
+      .country-code {
+        font-family: "Orbitron", sans-serif; font-size: 0.8rem; font-weight: 700; text-align: center;
+        border: 1px solid var(--line); border-radius: 7px; padding: 0.28rem 0; color: var(--teal-bright);
+        background: rgba(20, 160, 152, 0.10);
+      }
+      .country-bar-track { height: 8px; border-radius: 99px; background: rgba(160, 130, 255, 0.14); overflow: hidden; }
+      .country-bar { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--teal), var(--pink)); }
+      .country-count { font-weight: 700; font-variant-numeric: tabular-nums; }
+      .country-name { color: var(--muted); font-size: 0.9rem; }
+      .empty-box {
+        margin-top: 0.9rem; border: 1px dashed var(--line); border-radius: 12px;
+        padding: 1.2rem; color: var(--muted); text-align: center; font-weight: 600;
+      }
+
+      /* ---------- Forms & tables ---------- */
+      .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; margin-top: 1rem; }
+      .sub-card { background: rgba(10, 5, 24, 0.55); border: 1px solid var(--line-soft); border-radius: 12px; padding: 1.05rem 1.1rem 1.15rem; }
+      .sub-card h3 { font-size: 1rem; letter-spacing: 0.04em; margin-bottom: 0.8rem; }
+      .sub-card h3 .accent { color: var(--gold); }
+      .form-rows { display: grid; gap: 0.75rem; }
+      .code-row { display: flex; gap: 0.5rem; }
+      .code-row .field { flex: 1; min-width: 0; text-transform: uppercase; }
+      .tab-picker { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
+      .tab-picker button {
+        border: 1px solid var(--line); background: rgba(46, 28, 84, 0.5); color: var(--muted);
+        border-radius: 99px; padding: 0.3rem 0.9rem; font-weight: 700; cursor: pointer; min-height: 2.3rem;
+      }
+      .tab-picker button[aria-pressed="true"] { background: var(--pink-soft); border-color: var(--pink); color: var(--ink); }
+
+      table.data { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+      table.data th {
+        text-align: left; color: var(--muted); font-size: 0.85rem; letter-spacing: 0.07em; text-transform: uppercase;
+        padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line);
+      }
+      table.data td { padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+      table.data tr:last-child td { border-bottom: none; }
+      .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.92rem; }
+      .badge { display: inline-block; padding: 0.14rem 0.6rem; border-radius: 99px; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.03em; }
+      .badge.active { background: rgba(61, 220, 151, 0.15); color: var(--ok); border: 1px solid rgba(61, 220, 151, 0.4); }
+      .badge.expired { background: rgba(255, 84, 112, 0.13); color: #ff8fa3; border: 1px solid rgba(255, 84, 112, 0.4); }
+      .badge.usedup { background: rgba(255, 210, 62, 0.12); color: var(--gold); border: 1px solid rgba(255, 210, 62, 0.4); }
+      .badge.free { background: rgba(47, 230, 207, 0.12); color: var(--teal-bright); border: 1px solid rgba(47, 230, 207, 0.4); }
+      .txid-cell { cursor: pointer; color: var(--teal-bright); }
+      .txid-cell:hover { text-decoration: underline; }
+
+      /* ---------- Shop ---------- */
+      .shop-group { margin-top: 1.3rem; }
+      .shop-group > h3 { font-size: 1rem; letter-spacing: 0.06em; color: var(--ink); display: flex; align-items: baseline; gap: 0.6rem; }
+      .shop-group > h3 .count { color: var(--faint); font-family: "Rajdhani", sans-serif; font-weight: 600; font-size: 0.9rem; letter-spacing: 0; }
+      .shop-rows { margin-top: 0.55rem; border: 1px solid var(--line-soft); border-radius: 12px; overflow: hidden; }
+      .shop-row {
+        display: flex; align-items: center; gap: 0.8rem; padding: 0.5rem 0.85rem;
+        background: rgba(10, 5, 24, 0.5); border-bottom: 1px solid var(--line-soft);
+      }
+      .shop-row:last-child { border-bottom: none; }
+      .shop-row.hidden-item .item-name { color: var(--faint); text-decoration: line-through; }
+      .item-idx { font-family: "Orbitron", sans-serif; font-size: 0.75rem; color: var(--faint); width: 1.7rem; text-align: right; flex: none; }
+      .item-name { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+      .price-wrap { display: flex; align-items: center; gap: 0.4rem; flex: none; }
+      .price-wrap .field { width: 6.2rem; text-align: right; font-variant-numeric: tabular-nums; }
+      .price-wrap .unit { color: var(--faint); font-size: 0.88rem; font-weight: 600; }
+      .switch { position: relative; display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.45rem 0.2rem; flex: none; }
+      .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+      .switch .track { width: 46px; height: 26px; border-radius: 99px; background: rgba(160, 130, 255, 0.25); border: 1px solid var(--line); position: relative; transition: background 0.15s; flex: none; }
+      .switch .track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #cdc2ee; transition: left 0.15s, background 0.15s; }
+      .switch input:checked + .track { background: var(--teal); border-color: var(--teal-bright); }
+      .switch input:checked + .track::after { left: 22px; background: #fff; }
+      .switch input:focus-visible + .track { outline: 2px solid var(--teal-bright); outline-offset: 2px; }
+      .switch .switch-label { font-weight: 700; font-size: 0.9rem; color: var(--muted); min-width: 2.6rem; }
+      .sec-actions { margin-top: 1.2rem; display: flex; gap: 0.7rem; flex-wrap: wrap; align-items: center; }
+
+      /* ---------- Settings ---------- */
+      .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-top: 1rem; }
+      .pack-rows { display: grid; gap: 0.6rem; margin-top: 0.4rem; }
+      .pack-row { display: flex; align-items: center; gap: 0.7rem; }
+      .pack-row .pack-gems { flex: 1; font-weight: 700; }
+      .pack-row .pack-gems .unit { color: var(--faint); font-weight: 600; }
+      .pack-row .field { width: 7rem; text-align: right; font-variant-numeric: tabular-nums; }
+      .pack-row .dollar { color: var(--gold); font-weight: 700; }
+
+      /* ---------- Ads ---------- */
+      .ads-server-note { color: var(--teal-bright); font-weight: 600; width: 100%; }
+      .ads-toggle-row {
+        display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+        background: rgba(10, 5, 24, 0.55); border: 1px solid var(--line-soft); border-radius: 12px;
+        padding: 1rem 1.1rem; margin-top: 1rem;
+      }
+      .ads-toggle-row .ads-toggle-copy { flex: 1; min-width: 200px; }
+      .ads-toggle-row .ads-toggle-copy strong { display: block; font-size: 1.05rem; letter-spacing: 0.03em; }
+      .ads-toggle-row .ads-toggle-copy span { color: var(--muted); font-size: 0.95rem; }
+      .switch-big .track { width: 68px; height: 38px; }
+      .switch-big .track::after { width: 30px; height: 30px; top: 3px; left: 3px; }
+      .switch-big input:checked + .track::after { left: 33px; }
+      .switch-big .switch-label { font-size: 1.05rem; min-width: 3rem; }
+      .ads-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 1rem; }
+      @media (min-width: 760px) { .ads-grid { grid-template-columns: 1fr 1fr; } .ads-grid .ads-wide { grid-column: 1 / -1; } }
+      textarea.field.ads-code {
+        min-height: 7.5rem; resize: vertical; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-size: 0.88rem; line-height: 1.45; white-space: pre-wrap; word-break: break-all;
+      }
+      .ads-hint { color: var(--faint); font-size: 0.9rem; margin-top: 0.35rem; }
+      .ads-group {
+        margin-top: 1.25rem; border: 1px solid var(--line-soft); border-radius: 12px;
+        padding: 1.05rem 1.1rem 1.15rem; background: rgba(10, 5, 24, 0.45);
+      }
+      .ads-group > h3 { font-size: 1rem; letter-spacing: 0.06em; }
+      .ads-group > h3 .accent { color: var(--gold); }
+      .ads-group-sub { color: var(--muted); font-size: 0.95rem; margin-top: 0.25rem; }
+      .ads-group .ads-grid { margin-top: 0.9rem; }
+
+      /* ---------- Upload Items ---------- */
+      .upload-layout { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 1rem; }
+      @media (min-width: 760px) { .upload-layout { grid-template-columns: 320px 1fr; } }
+      .upload-picker {
+        border: 1px dashed var(--line); border-radius: 12px; background: rgba(10, 5, 24, 0.55);
+        padding: 1rem; display: grid; gap: 0.7rem; align-content: start;
+      }
+      .upload-preview {
+        width: 100%; aspect-ratio: 4 / 3; border-radius: 10px; border: 1px solid var(--line-soft);
+        background: rgba(8, 4, 20, 0.75); display: flex; align-items: center; justify-content: center;
+        overflow: hidden; color: var(--faint); font-weight: 700; text-align: center; padding: 0.6rem;
+      }
+      .upload-preview img { width: 100%; height: 100%; object-fit: contain; display: block; }
+      .upload-file-meta { color: var(--muted); font-size: 0.92rem; min-height: 1.35em; overflow-wrap: anywhere; }
+      .upload-file-error { color: var(--danger); font-weight: 700; min-height: 1.35em; }
+      input[type="file"].field { padding: 0.55rem 0.75rem; }
+      input[type="file"].field::file-selector-button {
+        font: inherit; font-weight: 700; color: #fff; background: linear-gradient(135deg, #17bdb0, #0d7a72);
+        border: 1px solid rgba(47, 230, 207, 0.5); border-radius: 8px; padding: 0.35rem 0.8rem; margin-right: 0.7rem; cursor: pointer;
+      }
+      .item-thumb { width: 52px; height: 52px; object-fit: contain; border-radius: 8px; border: 1px solid var(--line-soft); background: rgba(8, 4, 20, 0.75); display: block; }
+      .item-thumb-empty { width: 52px; height: 52px; border-radius: 8px; border: 1px dashed var(--line); color: var(--faint); display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 700; }
+      .theme-colors { display: grid; gap: 0.75rem; border: 1px solid var(--line-soft); border-radius: 12px; background: rgba(10, 5, 24, 0.45); padding: 0.9rem 1rem 1rem; }
+      .theme-colors .tc-title { font-weight: 700; letter-spacing: 0.04em; }
+      .theme-colors .tc-title .accent { color: var(--gold); }
+      .color-row { display: grid; grid-template-columns: 1fr auto; gap: 0.45rem 0.7rem; align-items: end; }
+      .color-controls { display: flex; gap: 0.5rem; align-items: center; }
+      input[type="color"].color-swatch {
+        width: 52px; height: 42px; padding: 3px; border-radius: 10px; cursor: pointer;
+        background: rgba(8, 4, 20, 0.75); border: 1px solid var(--line);
+      }
+      .color-controls .field { width: 7.2rem; text-transform: uppercase; }
+      .palette-swatches { display: inline-flex; gap: 0.3rem; margin-left: 0.55rem; vertical-align: middle; }
+      .palette-swatches .sw { width: 16px; height: 16px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.35); display: inline-block; }
+      .badge.paid { background: rgba(255, 210, 62, 0.12); color: var(--gold); border: 1px solid rgba(255, 210, 62, 0.4); }
+      .badge.ads { background: rgba(255, 45, 149, 0.13); color: #ff8fc0; border: 1px solid rgba(255, 45, 149, 0.45); }
+
+      /* ---------- Modal & toast ---------- */
+      .modal-back {
+        position: fixed; inset: 0; background: rgba(4, 2, 10, 0.78); z-index: 90;
+        display: flex; align-items: center; justify-content: center; padding: 1.2rem;
+      }
+      .modal-card { background: var(--panel-solid); border: 1px solid var(--line); border-radius: 16px; padding: 1.5rem; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+      .modal-card h3 { font-size: 1.05rem; margin-bottom: 0.6rem; }
+      .modal-card p { color: var(--muted); }
+      .modal-card .modal-actions { display: flex; gap: 0.7rem; margin-top: 1.3rem; justify-content: flex-end; }
+      .toast {
+        position: fixed; left: 50%; bottom: 1.4rem; transform: translateX(-50%) translateY(20px);
+        background: #1d1038; border: 1px solid var(--teal); color: var(--ink); font-weight: 700;
+        padding: 0.6rem 1.2rem; border-radius: 99px; opacity: 0; pointer-events: none; z-index: 99;
+        transition: opacity 0.2s, transform 0.2s; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      }
+      .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+      @media (max-width: 680px) {
+        section.panel { padding: 1.1rem 0.95rem 1.25rem; }
+        table.data thead { display: none; }
+        table.data, table.data tbody, table.data tr, table.data td { display: block; width: 100%; }
+        table.data tr { border: 1px solid var(--line-soft); border-radius: 12px; margin-bottom: 0.7rem; padding: 0.35rem 0.2rem; background: rgba(10, 5, 24, 0.5); }
+        table.data td { border-bottom: none; display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.4rem 0.7rem; }
+        table.data td::before { content: attr(data-label); color: var(--muted); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; flex: none; }
+        .shop-row { flex-wrap: wrap; }
+        .item-name { flex-basis: calc(100% - 3rem); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        .btn, .toast, .switch .track, .switch .track::after { transition: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ============ GATE: admin login ============ -->
+    <div class="gate-wrap" id="gate">
+      <div class="gate-card">
+        <h1><span class="nw-pink">NEON</span> <span class="nw-teal">WAVE</span> ADMIN</h1>
+        <p class="gate-sub">Log in with your admin username and password to open the dashboard.</p>
+        <form id="gate-form">
+          <div>
+            <label class="flabel" for="username-input">Username</label>
+            <input class="field" id="username-input" type="text" autocomplete="username" placeholder="Username" />
+          </div>
+          <div>
+            <label class="flabel" for="password-input">Password</label>
+            <input class="field" id="password-input" type="password" autocomplete="current-password" placeholder="Password" />
+          </div>
+          <button class="btn btn-primary" id="login-btn" type="submit">Login</button>
+          <p class="status" id="gate-status" role="status"></p>
+        </form>
+        <p class="gate-note">Your login is kept only in this browser and is sent only to the game's two Worker servers.</p>
+      </div>
+    </div>
+
+    <!-- ============ APP ============ -->
+    <div id="app" hidden>
+      <header class="topbar">
+        <div class="topbar-in">
+          <span class="brand"><span class="nw-pink">NEON</span> <span class="nw-teal">WAVE</span> <span class="admin-tag">ADMIN</span></span>
+          <nav class="sections" aria-label="Sections">
+            <a href="#stats">Stats</a>
+            <a href="#codes">Gift Codes</a>
+            <a href="#payments">Payments</a>
+            <a href="#shop">Shop</a>
+            <a href="#settings">Settings</a>
+            <a href="#ads">Ads</a>
+            <a href="#items">Upload Items</a>
+          </nav>
+          <span class="spacer"></span>
+          <button class="btn btn-small" id="signout-btn" type="button">Change login / Sign out</button>
+        </div>
+      </header>
+
+      <main>
+        <!-- ============ (a) STATS ============ -->
+        <section class="panel" id="stats">
+          <div class="sec-head">
+            <h2>PLAYER STATS</h2>
+            <span class="spacer"></span>
+            <button class="btn btn-small" id="stats-refresh" type="button">Refresh</button>
+            <p class="sec-sub">How many people play, who is online right now, and where they play from.</p>
+          </div>
+          <div id="stats-body">
+            <p class="status info" id="stats-status" role="status">Loading…</p>
+          </div>
+        </section>
+
+        <!-- ============ (b) GIFT CODES ============ -->
+        <section class="panel" id="codes">
+          <div class="sec-head">
+            <h2>GIFT CODES</h2>
+            <span class="spacer"></span>
+            <button class="btn btn-small" id="codes-refresh" type="button">Refresh list</button>
+            <p class="sec-sub">Create codes that give a player a shop item or free gems. Every code works 5 times and expires after the days you set.</p>
+          </div>
+
+          <div class="form-grid">
+            <div class="sub-card">
+              <h3>New <span class="accent">item</span> code</h3>
+              <div class="tab-picker" id="item-tab-picker" role="group" aria-label="Item type"></div>
+              <div class="form-rows">
+                <div>
+                  <label class="flabel" for="item-select">Item</label>
+                  <select class="field" id="item-select"></select>
+                </div>
+                <div>
+                  <label class="flabel" for="item-code">Code</label>
+                  <div class="code-row">
+                    <input class="field" id="item-code" type="text" placeholder="NEON-GIFT-…" autocomplete="off" spellcheck="false" />
+                    <button class="btn" id="item-random" type="button">Random</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="flabel" for="item-days">Expires after (days)</label>
+                  <input class="field" id="item-days" type="number" min="1" max="3650" step="1" value="7" />
+                </div>
+                <button class="btn btn-primary" id="item-create" type="button">Create item code</button>
+                <p class="status" id="item-status" role="status"></p>
+              </div>
+            </div>
+
+            <div class="sub-card">
+              <h3>New <span class="accent">gems</span> code</h3>
+              <div class="form-rows">
+                <div>
+                  <label class="flabel" for="gem-amount">Gems to give</label>
+                  <input class="field" id="gem-amount" type="number" min="1" max="100000" step="1" placeholder="500" />
+                </div>
+                <div>
+                  <label class="flabel" for="gem-code">Code</label>
+                  <div class="code-row">
+                    <input class="field" id="gem-code" type="text" placeholder="NEON-GEMS-…" autocomplete="off" spellcheck="false" />
+                    <button class="btn" id="gem-random" type="button">Random</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="flabel" for="gem-days">Expires after (days)</label>
+                  <input class="field" id="gem-days" type="number" min="1" max="3650" step="1" value="7" />
+                </div>
+                <button class="btn btn-teal" id="gem-create" type="button">Create gem code</button>
+                <p class="status" id="gem-status" role="status"></p>
+              </div>
+            </div>
+          </div>
+
+          <div id="codes-list-wrap">
+            <p class="status info" id="codes-status" role="status">Loading…</p>
+          </div>
+        </section>
+
+        <!-- ============ (c) PAYMENTS ============ -->
+        <section class="panel" id="payments">
+          <div class="sec-head">
+            <h2>PAYMENTS</h2>
+            <span class="spacer"></span>
+            <button class="btn btn-small" id="payments-refresh" type="button">Refresh</button>
+            <p class="sec-sub">Verified USDT (BEP20) gem purchases. Tap a TXID to copy the full hash.</p>
+          </div>
+          <div id="payments-body">
+            <p class="status info" id="payments-status" role="status">Loading…</p>
+          </div>
+        </section>
+
+        <!-- ============ (d) SHOP ============ -->
+        <section class="panel" id="shop">
+          <div class="sec-head">
+            <h2>SHOP CATALOG</h2>
+            <p class="sec-sub">Set each item's price in gems (0 = free) and show or hide it in the game's shop. Adding a brand-new item design still needs a game update — this controls the items the game already has.</p>
+          </div>
+          <div id="shop-body">
+            <p class="status info" id="shop-status" role="status">Loading…</p>
+          </div>
+          <div class="sec-actions">
+            <button class="btn btn-primary" id="shop-save" type="button">Save catalog</button>
+            <button class="btn" id="shop-reload" type="button">Reload from server</button>
+          </div>
+          <p class="status" id="shop-save-status" role="status"></p>
+        </section>
+
+        <!-- ============ (e) SETTINGS ============ -->
+        <section class="panel" id="settings">
+          <div class="sec-head">
+            <h2>GAME SETTINGS</h2>
+            <p class="sec-sub">Gem rewards and gem pack prices. The game reads these from the server.</p>
+          </div>
+          <div class="settings-grid">
+            <div class="sub-card">
+              <h3>Gem <span class="accent">rewards</span></h3>
+              <div class="form-rows">
+                <div>
+                  <label class="flabel" for="set-level">Gems per Classic level completed</label>
+                  <input class="field" id="set-level" type="number" min="0" step="1" />
+                </div>
+                <div>
+                  <label class="flabel" for="set-endless">Gems per 500m in Endless</label>
+                  <input class="field" id="set-endless" type="number" min="0" step="1" />
+                </div>
+                <div>
+                  <label class="flabel" for="set-free">Free gems per hour</label>
+                  <input class="field" id="set-free" type="number" min="0" step="1" />
+                </div>
+              </div>
+            </div>
+            <div class="sub-card">
+              <h3>Gem pack <span class="accent">prices</span> (USD)</h3>
+              <div class="pack-rows" id="pack-rows"></div>
+            </div>
+          </div>
+          <div class="sec-actions">
+            <button class="btn btn-primary" id="settings-save" type="button">Save settings</button>
+            <button class="btn" id="settings-reload" type="button">Reload from server</button>
+          </div>
+          <p class="status" id="settings-status" role="status"></p>
+        </section>
+
+        <!-- ============ (f) ADS ============ -->
+        <section class="panel" id="ads">
+          <div class="sec-head">
+            <h2>ADS</h2>
+            <span class="spacer"></span>
+            <button class="btn btn-small" id="ads-reload-top" type="button">Reload</button>
+            <p class="sec-sub">Control the game's ads from here. The game reads these settings from the server when it loads. Turn ads off to hide every ad and every &ldquo;watch ad&rdquo; button in the game.</p>
+            <p class="ads-server-note">Ads load through your own server, so most ad blockers can't hide them.</p>
+          </div>
+
+          <div class="ads-toggle-row">
+            <div class="ads-toggle-copy">
+              <strong>Ads in the game</strong>
+              <span id="ads-toggle-help">When OFF, the game shows no ads anywhere and hides the revive and trial buttons. When ON, the game uses the codes below.</span>
+            </div>
+            <label class="switch switch-big">
+              <input type="checkbox" id="ads-enabled" aria-label="Turn ads on or off" />
+              <span class="track"></span>
+              <span class="switch-label" id="ads-enabled-label">OFF</span>
+            </label>
+          </div>
+
+          <div class="form-grid">
+            <div>
+              <label class="flabel" for="ads-network">Ad network</label>
+              <select class="field" id="ads-network">
+                <option value="adsterra">Adsterra</option>
+                <option value="monetag">Monetag</option>
+              </select>
+              <p class="ads-hint">Pick which network the game currently uses. Both groups below are saved together — switching network does not erase the other group&rsquo;s codes.</p>
+            </div>
+          </div>
+
+          <div class="ads-group" aria-labelledby="ads-adsterra-heading">
+            <h3 id="ads-adsterra-heading">ADSTERRA <span class="accent">CODES</span></h3>
+            <p class="ads-group-sub">Adsterra codes for the game. These are used when the network above is set to Adsterra.</p>
+            <div class="ads-grid">
+              <div>
+                <label class="flabel" for="ads-native">NATIVE BANNER CODE — MENU BANNER SLOT + SHOP NATIVE SLOT · Responsive, blends into the page</label>
+                <textarea class="field ads-code" id="ads-native" placeholder="Paste the native banner code here" autocomplete="off" spellcheck="false"></textarea>
+                <p class="ads-hint">Feeds the menu banner slot AND the shop native slot.</p>
+              </div>
+              <div>
+                <label class="flabel" for="ads-social">SOCIAL BAR CODE — SOCIAL BAR SLOT · Responsive in-page push bar</label>
+                <textarea class="field ads-code" id="ads-social" placeholder="Paste the social bar script here" autocomplete="off" spellcheck="false"></textarea>
+                <p class="ads-hint">Feeds the social bar slot.</p>
+              </div>
+              <div class="ads-wide">
+                <label class="flabel" for="ads-direct">DIRECT LINK URL — REVIVE + TRIAL ADS · Smartlink, a URL that works on every device</label>
+                <input class="field" id="ads-direct" type="url" placeholder="https://…" autocomplete="off" spellcheck="false" />
+                <p class="ads-hint">Feeds revive + item/theme trials — opens in a new tab, then a 10-second countdown.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="ads-group" aria-labelledby="ads-monetag-heading">
+            <h3 id="ads-monetag-heading">MONETAG <span class="accent">CODES</span></h3>
+            <p class="ads-group-sub">Monetag codes for the game. These are used when the network above is set to Monetag.</p>
+            <div class="ads-grid">
+              <div>
+                <label class="flabel" for="ads-monetag-inpage">IN-PAGE PUSH CODE — SOCIAL BAR SLOT · Responsive banner inside the page, works on iOS/macOS too</label>
+                <textarea class="field ads-code" id="ads-monetag-inpage" placeholder="Paste the In-Page Push code here" autocomplete="off" spellcheck="false"></textarea>
+                <p class="ads-hint">Feeds the social bar slot.</p>
+              </div>
+              <div>
+                <label class="flabel" for="ads-monetag-inpage-native">IN-PAGE PUSH CODE — NATIVE STRIP · Responsive banner inside the page</label>
+                <textarea class="field ads-code" id="ads-monetag-inpage-native" placeholder="Paste the In-Page Push code here" autocomplete="off" spellcheck="false"></textarea>
+                <p class="ads-hint">Feeds the shop native slot AND the gameplay native strip. Leave empty to reuse the Social Bar code.</p>
+              </div>
+              <div>
+                <label class="flabel" for="ads-monetag-vignette">VIGNETTE BANNER CODE — MENU BANNER SLOT · Responsive native-style banner with Close + CTA</label>
+                <textarea class="field ads-code" id="ads-monetag-vignette" placeholder="Paste the Vignette Banner code here" autocomplete="off" spellcheck="false"></textarea>
+                <p class="ads-hint">Feeds the menu banner slot.</p>
+              </div>
+              <div class="ads-wide">
+                <label class="flabel" for="ads-monetag-smartlink">SMARTLINK URL — REVIVE + TRIAL ADS · A URL that works on every device</label>
+                <input class="field" id="ads-monetag-smartlink" type="url" placeholder="https://…" autocomplete="off" spellcheck="false" />
+                <p class="ads-hint">Feeds revive + item/theme trials — opens in a new tab, then a 10-second countdown.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="sec-actions">
+            <button class="btn btn-primary" id="ads-save" type="button">Save ads</button>
+            <button class="btn" id="ads-reload" type="button">Reload from server</button>
+          </div>
+          <p class="status" id="ads-status" role="status"></p>
+        </section>
+
+        <!-- ============ (g) UPLOAD ITEMS ============ -->
+        <section class="panel" id="items">
+          <div class="sec-head">
+            <h2>UPLOAD ITEMS</h2>
+            <span class="spacer"></span>
+            <button class="btn btn-small" id="items-refresh" type="button">Refresh list</button>
+            <p class="sec-sub">Upload a new item design for any shop tab — Arrows, Trails, Colours or Themes — and it will appear in the game's shop, no game re-upload needed. Every tab gets the same choice: free, buy with gems, or unlock temporarily by watching an ad. For a Theme, you can also set its palette colours below.</p>
+          </div>
+
+          <div class="upload-layout">
+            <div class="upload-picker">
+              <div>
+                <label class="flabel" for="upload-image">Item image</label>
+                <input class="field" id="upload-image" type="file" accept="image/*" />
+                <p class="ads-hint">PNG, JPG or WebP. Maximum image size: 500KB.</p>
+              </div>
+              <div class="upload-preview" id="upload-preview"><span>No image chosen yet</span></div>
+              <p class="upload-file-meta" id="upload-file-meta" role="status"></p>
+              <p class="upload-file-error" id="upload-image-error" role="alert"></p>
+            </div>
+
+            <div class="sub-card">
+              <h3>New <span class="accent">custom item</span></h3>
+              <div class="form-rows">
+                <div>
+                  <label class="flabel" for="upload-name">Item name</label>
+                  <input class="field" id="upload-name" type="text" placeholder="e.g. Dragon Wing Arrow" autocomplete="off" maxlength="80" />
+                </div>
+                <div>
+                  <label class="flabel" for="upload-tab">Tab</label>
+                  <select class="field" id="upload-tab">
+                    <option value="arrows">Arrows</option>
+                    <option value="trails">Trails</option>
+                    <option value="colours">Colours</option>
+                    <option value="themes">Themes</option>
+                  </select>
+                </div>
+                <div class="theme-colors" id="upload-theme-colors" hidden>
+                  <p class="tc-title">Theme <span class="accent">palette</span> — optional</p>
+                  <p class="ads-hint" style="margin-top:-0.35rem">Only for Themes. Leave a hex box empty and the default colour shown next to it is used.</p>
+                  <div class="color-row">
+                    <div>
+                      <label class="flabel" for="upload-color-primary-text">Primary colour</label>
+                      <div class="color-controls">
+                        <input type="color" class="color-swatch" id="upload-color-primary" value="#22d3ee" aria-label="Primary colour picker" />
+                        <input class="field" id="upload-color-primary-text" type="text" placeholder="#22d3ee" autocomplete="off" spellcheck="false" maxlength="7" aria-label="Primary colour hex value" />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="color-row">
+                    <div>
+                      <label class="flabel" for="upload-color-spike-text">Spike colour</label>
+                      <div class="color-controls">
+                        <input type="color" class="color-swatch" id="upload-color-spike" value="#f472b6" aria-label="Spike colour picker" />
+                        <input class="field" id="upload-color-spike-text" type="text" placeholder="#f472b6" autocomplete="off" spellcheck="false" maxlength="7" aria-label="Spike colour hex value" />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="color-row">
+                    <div>
+                      <label class="flabel" for="upload-color-saw-text">Saw colour</label>
+                      <div class="color-controls">
+                        <input type="color" class="color-swatch" id="upload-color-saw" value="#a3e635" aria-label="Saw colour picker" />
+                        <input class="field" id="upload-color-saw-text" type="text" placeholder="#a3e635" autocomplete="off" spellcheck="false" maxlength="7" aria-label="Saw colour hex value" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label class="flabel" for="upload-unlock">Unlock type</label>
+                  <select class="field" id="upload-unlock">
+                    <option value="free">Free</option>
+                    <option value="paid">Paid — gems</option>
+                    <option value="ads">Ads trial — temporary</option>
+                  </select>
+                </div>
+                <div id="upload-price-wrap" hidden>
+                  <label class="flabel" for="upload-price">Gem price</label>
+                  <input class="field" id="upload-price" type="number" min="1" step="1" placeholder="500" />
+                  <p class="ads-hint">Only for Paid items. Players pay this many gems to own the item permanently.</p>
+                </div>
+                <button class="btn btn-primary" id="upload-save" type="button">Save item</button>
+                <p class="status" id="upload-status" role="status"></p>
+              </div>
+            </div>
+          </div>
+
+          <div id="items-list-wrap">
+            <p class="status info" id="items-status" role="status">Loading…</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ============ Revoke confirm ============ -->
+    <div class="modal-back" id="revoke-modal" hidden>
+      <div class="modal-card" role="alertdialog" aria-labelledby="revoke-title" aria-describedby="revoke-desc">
+        <h3 id="revoke-title">Revoke this code?</h3>
+        <p id="revoke-desc"></p>
+        <div class="modal-actions">
+          <button class="btn" id="revoke-cancel" type="button">Cancel</button>
+          <button class="btn btn-danger" id="revoke-confirm" type="button">Revoke code</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+      "use strict";
+      var GIFT_WORKER = "https://neon-wave-gift.allvideos-bd-82.workers.dev";
+      var TXID_WORKER = "https://neon-wave-txid.allvideos-bd-82.workers.dev";
+      var LS_USER_KEY = "neonWaveAdminUsername";
+      var LS_PASS_KEY = "neonWaveAdminPassword";
+      var LS_OLD_KEY = "neonWaveAdminSecret";
+      var NETWORK_MSG = "Could not reach the server — try opening this admin panel in a real browser (Chrome/Safari), not the Muse app preview.";
+      var memCredential = "";
+
+      /* The game's built-in shop catalog (names + gem prices), used to
+         fill the item pickers and as the starting point for the Shop
+         section when the server has no saved catalog yet. */
+      var BUILTIN = {
+        arrows: [
+          ["Volt Bolt", 0], ["Crescent Moon", 0], ["Surge", 0], ["Ember Flame", 1500],
+          ["Nova Star", 1500], ["Royal Crown", 1750], ["Monarch Wing", 2000], ["Frost Flake", 2000],
+          ["Tempo Note", 2500], ["Gate Key", 2750], ["Knight Blade", 3000], ["Pulse Heart", 5000],
+          ["Echo Bowtie", 7000], ["Tri-Halo", 7000], ["Vortex", 8000]
+        ],
+        trails: [
+          ["Wavy Ribbon", 0], ["Bubbles", 0], ["Sparkles", 0], ["Gradient Fade", 1250],
+          ["Hearts", 1500], ["Music Notes", 1500], ["Petals", 1750], ["Smoke Puffs", 2000],
+          ["Double Helix", 2250], ["Confetti", 2500], ["Starfall", 3500], ["Lightning Zigzag", 6000],
+          ["Orbit Rings", 7000], ["Fireflies", 8000], ["Galaxy Swirl", 8000]
+        ],
+        colors: [
+          ["Volt White", 0], ["Mint Pulse", 0], ["Solar Gold", 0], ["Candy Duo", 1000],
+          ["Dusk Fade", 1500], ["Dot Matrix", 2000], ["Wave Lines", 2500], ["Nebula Swirl", 6000],
+          ["Heartbeat", 7000], ["Starfield", 8000], ["Aurora Veil", 8000]
+        ],
+        themes: [
+          ["Auto", 0], ["NEON BOSS BATTLE", 0], ["SYNTHWAVE SUNSET", 500], ["LASER TEAL-PINK", 750],
+          ["TOXIC LIME", 1000], ["ARCADE AFTERGLOW", 1250], ["BUBBLEGUM ARCADE", 1500],
+          ["NOIR PIXEL RACER", 1750], ["GLITCH CITY NIGHTS", 2000], ["FIRE LAVA", 2250],
+          ["OCEAN ICE", 2500], ["EMERALD GOLD", 3000], ["RETRO EARTHY", 3000]
+        ]
+      };
+      var TAB_LABELS = { arrows: "Arrows", trails: "Trails", colors: "Colors", themes: "Themes" };
+      var TAB_ORDER = ["arrows", "trails", "colors", "themes"];
+      var DEFAULT_SETTINGS = {
+        gemRewardPerLevel: 50,
+        gemRewardEndlessPer500m: 10,
+        freeGemsPerHour: 25,
+        packPrices: { "500": 0.99, "1500": 2.99, "4000": 6.99, "10000": 14.99, "30000": 39.99 }
+      };
+      var PACK_SIZES = [500, 1500, 4000, 10000, 30000];
+
+      function $(id) { return document.getElementById(id); }
+      function el(tag, cls, text) {
+        var n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (text !== undefined) n.textContent = text;
+        return n;
+      }
+      function getCredential() {
+        try {
+          var u = localStorage.getItem(LS_USER_KEY) || "";
+          var p = localStorage.getItem(LS_PASS_KEY) || "";
+          if (u && p) return u + ":" + p;
+        } catch (e) { /* fall through to the in-memory copy */ }
+        return memCredential;
+      }
+      function setStatus(node, msg, kind) {
+        node.textContent = msg || "";
+        node.className = "status" + (kind ? " " + kind : "");
+      }
+      var toastTimer = null;
+      function toast(msg) {
+        var t = $("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2200);
+      }
+      function fmtDate(iso) {
+        if (!iso) return "—";
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return String(iso);
+        return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) +
+          ", " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+      }
+      function fmtNum(n) { return Number(n || 0).toLocaleString("en-US"); }
+
+      /* One call helper for both Workers. Sends the login ONLY as the
+         x-admin-secret header, in the form "username:password", to these
+         two origins. */
+      function api(base, path, body, method) {
+        var opts = {
+          method: method || "POST",
+          headers: { "Content-Type": "application/json", "x-admin-secret": getCredential() }
+        };
+        if (opts.method !== "GET") opts.body = JSON.stringify(body || {});
+        return fetch(base + path, opts).then(function (res) {
+          return res.json().catch(function () { return null; }).then(function (data) {
+            if (!res.ok || !data || data.ok === false) {
+              var msg = (data && data.error) ? data.error : "Request failed.";
+              if (res.status === 401) msg = "Wrong username or password.";
+              else msg = msg + " (HTTP " + res.status + ")";
+              throw new Error(msg);
+            }
+            return data;
+          });
+        }, function () {
+          throw new Error(NETWORK_MSG);
+        });
+      }
+
+      /* ================= Gate ================= */
+      function showGate(msg, kind) {
+        $("app").hidden = true;
+        $("gate").hidden = false;
+        if (msg) setStatus($("gate-status"), msg, kind);
+      }
+      function showApp() {
+        $("gate").hidden = true;
+        $("app").hidden = false;
+        loadAll();
+      }
+      $("gate-form").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        var username = $("username-input").value.trim();
+        var password = $("password-input").value;
+        if (!username || !password) { setStatus($("gate-status"), "Type your username and password first.", "err"); return; }
+        var btn = $("login-btn");
+        btn.disabled = true;
+        setStatus($("gate-status"), "Logging in…", "info");
+        fetch(GIFT_WORKER + "/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-admin-secret": username + ":" + password },
+          body: JSON.stringify({ username: username, password: password })
+        }).then(function (res) {
+          return res.json().catch(function () { return null; }).then(function (data) {
+            if (res.status === 401) { setStatus($("gate-status"), "Wrong username or password.", "err"); return; }
+            if (!res.ok || !data || data.ok === false) {
+              setStatus($("gate-status"), ((data && data.error) ? data.error : "Login failed.") + " (HTTP " + res.status + ")", "err");
+              return;
+            }
+            memCredential = username + ":" + password;
+            try {
+              localStorage.setItem(LS_USER_KEY, username);
+              localStorage.setItem(LS_PASS_KEY, password);
+              localStorage.removeItem(LS_OLD_KEY);
+            } catch (e) { /* storage blocked: the in-memory copy still works for this session */ }
+            $("password-input").value = "";
+            showApp();
+          });
+        }, function () {
+          setStatus($("gate-status"), NETWORK_MSG, "err");
+        }).then(function () { btn.disabled = false; });
+      });
+      $("signout-btn").addEventListener("click", function () {
+        memCredential = "";
+        try {
+          localStorage.removeItem(LS_USER_KEY);
+          localStorage.removeItem(LS_PASS_KEY);
+          localStorage.removeItem(LS_OLD_KEY);
+        } catch (e) {}
+        showGate("Signed out. Log in again to open the dashboard.", "info");
+      });
+
+      function loadAll() {
+        loadStats();
+        loadCodes();
+        loadPayments();
+        loadCatalog(false);
+        loadSettings(false);
+        loadAds(false);
+        loadItems(false);
+      }
+
+      /* ================= (a) Stats ================= */
+      function loadStats() {
+        var body = $("stats-body");
+        body.innerHTML = "";
+        var st = el("p", "status info", "Loading…");
+        st.id = "stats-status"; st.setAttribute("role", "status");
+        body.appendChild(st);
+        api(GIFT_WORKER, "/stats", {}).then(function (data) {
+          body.innerHTML = "";
+          var total = Number(data.totalPlayers || 0);
+          var countries = data.countries || {};
+          var countryKeys = Object.keys(countries);
+          if (total === 0 && countryKeys.length === 0) {
+            body.appendChild(el("div", "empty-box", "No data yet — players appear here once the game is live and someone plays."));
+            return;
+          }
+          var grid = el("div", "stat-grid");
+          [["Total players", total, "pink"], ["Live online (last 5 min)", Number(data.liveOnline || 0), "teal"], ["Today's traffic", Number(data.todayTraffic || 0), "gold"]].forEach(function (s) {
+            var card = el("div", "stat-card " + s[2]);
+            card.appendChild(el("div", "stat-label", s[0]));
+            card.appendChild(el("div", "stat-num", fmtNum(s[1])));
+            grid.appendChild(card);
+          });
+          body.appendChild(grid);
+          if (countryKeys.length) {
+            var wrap = el("div", "country-list");
+            wrap.appendChild(el("h3", null, "PLAYERS BY COUNTRY"));
+            var max = 0;
+            countryKeys.forEach(function (k) { if (countries[k] > max) max = countries[k]; });
+            countryKeys.sort(function (a, b) { return countries[b] - countries[a]; });
+            var regionNames = null;
+            try { regionNames = new Intl.DisplayNames(["en"], { type: "region" }); } catch (e) {}
+            countryKeys.forEach(function (code) {
+              var row = el("div", "country-row");
+              row.appendChild(el("span", "country-code", code));
+              var mid = el("div");
+              var name = code;
+              if (regionNames && code !== "XX") { try { name = regionNames.of(code) || code; } catch (e) {} }
+              if (code === "XX") name = "Unknown";
+              mid.appendChild(el("div", "country-name", name));
+              var track = el("div", "country-bar-track");
+              var bar = el("div", "country-bar");
+              bar.style.width = Math.max(4, Math.round((countries[code] / Math.max(1, max)) * 100)) + "%";
+              track.appendChild(bar);
+              mid.appendChild(track);
+              row.appendChild(mid);
+              row.appendChild(el("span", "country-count", fmtNum(countries[code])));
+              wrap.appendChild(row);
+            });
+            body.appendChild(wrap);
+          }
+        }).catch(function (err) {
+          body.innerHTML = "";
+          var st2 = el("p", "status err", err.message);
+          st2.setAttribute("role", "status");
+          body.appendChild(st2);
+        });
+      }
+      $("stats-refresh").addEventListener("click", loadStats);
+
+      /* ================= (b) Gift codes ================= */
+      var pickerTab = "arrows";
+      function buildPicker() {
+        var picker = $("item-tab-picker");
+        picker.innerHTML = "";
+        TAB_ORDER.forEach(function (tab) {
+          var b = el("button", null, TAB_LABELS[tab]);
+          b.type = "button";
+          b.setAttribute("aria-pressed", tab === pickerTab ? "true" : "false");
+          b.addEventListener("click", function () { pickerTab = tab; buildPicker(); });
+          picker.appendChild(b);
+        });
+        var sel = $("item-select");
+        sel.innerHTML = "";
+        BUILTIN[pickerTab].forEach(function (item, i) {
+          var o = document.createElement("option");
+          o.value = String(i);
+          o.textContent = "#" + i + " — " + item[0];
+          sel.appendChild(o);
+        });
+      }
+      function randomCode(prefix) {
+        var chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+        var s = "";
+        for (var i = 0; i < 6; i++) s += chars.charAt(Math.floor(Math.random() * chars.length));
+        return prefix + s;
+      }
+      $("item-random").addEventListener("click", function () { $("item-code").value = randomCode("NEON-GIFT-"); });
+      $("gem-random").addEventListener("click", function () { $("gem-code").value = randomCode("NEON-GEMS-"); });
+
+      function createCode(payload, statusNode, btn) {
+        btn.disabled = true;
+        setStatus(statusNode, "Creating…", "info");
+        api(GIFT_WORKER, "/create", payload).then(function (data) {
+          var what = data.tab === "gems" ? fmtNum(data.gems) + " gems" : (data.name || "item");
+          setStatus(statusNode, "Created code " + data.code + " — gives " + what + ", valid until " + fmtDate(data.expiresAt) + ".", "ok");
+          loadCodes();
+        }).catch(function (err) {
+          setStatus(statusNode, err.message, "err");
+        }).then(function () { btn.disabled = false; });
+      }
+      $("item-create").addEventListener("click", function () {
+        var code = $("item-code").value.trim();
+        var days = Number($("item-days").value);
+        if (!code) { setStatus($("item-status"), "Type a code first (or tap Random).", "err"); return; }
+        if (!days || days < 1) { setStatus($("item-status"), "Expiry days must be at least 1.", "err"); return; }
+        createCode({ code: code, tab: pickerTab, index: Number($("item-select").value), days: days }, $("item-status"), this);
+      });
+      $("gem-create").addEventListener("click", function () {
+        var code = $("gem-code").value.trim();
+        var gems = Number($("gem-amount").value);
+        var days = Number($("gem-days").value);
+        if (!gems || gems < 1) { setStatus($("gem-status"), "Enter how many gems the code gives.", "err"); return; }
+        if (!code) { setStatus($("gem-status"), "Type a code first (or tap Random).", "err"); return; }
+        if (!days || days < 1) { setStatus($("gem-status"), "Expiry days must be at least 1.", "err"); return; }
+        createCode({ code: code, tab: "gems", gems: Math.floor(gems), days: days }, $("gem-status"), this);
+      });
+
+      var pendingRevoke = null;
+      function codeStatus(c) {
+        var expired = c.expired || (c.expiresAt && Date.now() > Date.parse(c.expiresAt));
+        if (expired) return ["Expired", "expired"];
+        if (Number(c.uses || 0) >= Number(c.maxUses || 5)) return ["Used up", "usedup"];
+        return ["Active", "active"];
+      }
+      function loadCodes() {
+        var wrap = $("codes-list-wrap");
+        wrap.innerHTML = "";
+        var st = el("p", "status info", "Loading…");
+        st.setAttribute("role", "status");
+        wrap.appendChild(st);
+        api(GIFT_WORKER, "/list", {}).then(function (data) {
+          wrap.innerHTML = "";
+          var codes = data.codes || [];
+          if (!codes.length) {
+            wrap.appendChild(el("div", "empty-box", "No gift codes yet. Create the first one with the forms above."));
+            return;
+          }
+          var table = el("table", "data");
+          var thead = el("thead");
+          var htr = el("tr");
+          ["Code", "Gives", "Uses", "Expires", "Status", ""].forEach(function (h) { htr.appendChild(el("th", null, h)); });
+          thead.appendChild(htr);
+          table.appendChild(thead);
+          var tbody = el("tbody");
+          codes.forEach(function (c) {
+            var tr = el("tr");
+            var tdCode = el("td", "mono", c.code); tdCode.setAttribute("data-label", "Code");
+            var gives = c.tab === "gems" ? fmtNum(c.gems) + " gems" : ((c.name || ("Item #" + c.index)) + " · " + (TAB_LABELS[c.tab] || c.tab));
+            var tdGives = el("td", null, gives); tdGives.setAttribute("data-label", "Gives");
+            var tdUses = el("td", null, Number(c.uses || 0) + "/" + Number(c.maxUses || 5)); tdUses.setAttribute("data-label", "Uses");
+            var tdExp = el("td", null, fmtDate(c.expiresAt)); tdExp.setAttribute("data-label", "Expires");
+            var stt = codeStatus(c);
+            var tdStatus = el("td"); tdStatus.setAttribute("data-label", "Status");
+            tdStatus.appendChild(el("span", "badge " + stt[1], stt[0]));
+            var tdAct = el("td"); tdAct.setAttribute("data-label", "");
+            var btn = el("button", "btn btn-danger btn-small", "Revoke");
+            btn.type = "button";
+            btn.addEventListener("click", function () {
+              pendingRevoke = c.code;
+              $("revoke-desc").textContent = "Code " + c.code + " (" + gives + ") will stop working for everyone, right away. This cannot be undone.";
+              $("revoke-modal").hidden = false;
+            });
+            tdAct.appendChild(btn);
+            [tdCode, tdGives, tdUses, tdExp, tdStatus, tdAct].forEach(function (td) { tr.appendChild(td); });
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody);
+          wrap.appendChild(table);
+        }).catch(function (err) {
+          wrap.innerHTML = "";
+          var e = el("p", "status err", err.message);
+          e.setAttribute("role", "status");
+          wrap.appendChild(e);
+        });
+      }
+      $("codes-refresh").addEventListener("click", loadCodes);
+      $("revoke-cancel").addEventListener("click", function () { pendingRevoke = null; $("revoke-modal").hidden = true; });
+      $("revoke-modal").addEventListener("click", function (ev) { if (ev.target === this) { pendingRevoke = null; this.hidden = true; } });
+      $("revoke-confirm").addEventListener("click", function () {
+        if (!pendingRevoke) return;
+        var code = pendingRevoke;
+        var btn = this;
+        btn.disabled = true;
+        api(GIFT_WORKER, "/revoke", { code: code }).then(function () {
+          toast("Code " + code + " revoked");
+          loadCodes();
+        }).catch(function (err) {
+          toast(err.message);
+        }).then(function () {
+          btn.disabled = false;
+          pendingRevoke = null;
+          $("revoke-modal").hidden = true;
+        });
+      });
+
+      /* ================= (c) Payments ================= */
+      function copyText(text, doneMsg) {
+        function fallback() {
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position = "fixed"; ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          var ok = false;
+          try { ok = document.execCommand("copy"); } catch (e) {}
+          document.body.removeChild(ta);
+          toast(ok ? doneMsg : "Copy failed — long-press the TXID to copy it");
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { toast(doneMsg); }, fallback);
+        } else fallback();
+      }
+      function loadPayments() {
+        var body = $("payments-body");
+        body.innerHTML = "";
+        var st = el("p", "status info", "Loading…");
+        st.setAttribute("role", "status");
+        body.appendChild(st);
+        api(TXID_WORKER, "/list", {}).then(function (data) {
+          body.innerHTML = "";
+          var payments = data.payments || [];
+          var grid = el("div", "stat-grid");
+          var card = el("div", "stat-card gold");
+          card.appendChild(el("div", "stat-label", "Total revenue (USDT)"));
+          card.appendChild(el("div", "stat-num", "$" + Number(data.totalRevenue || 0).toFixed(2)));
+          grid.appendChild(card);
+          var card2 = el("div", "stat-card teal");
+          card2.appendChild(el("div", "stat-label", "Verified payments"));
+          card2.appendChild(el("div", "stat-num", fmtNum(payments.length)));
+          grid.appendChild(card2);
+          body.appendChild(grid);
+          if (!payments.length) {
+            body.appendChild(el("div", "empty-box", "No verified payments yet."));
+            return;
+          }
+          var table = el("table", "data");
+          var thead = el("thead");
+          var htr = el("tr");
+          ["TXID", "Gems", "Amount (USDT)", "Time"].forEach(function (h) { htr.appendChild(el("th", null, h)); });
+          thead.appendChild(htr);
+          table.appendChild(thead);
+          var tbody = el("tbody");
+          payments.forEach(function (p) {
+            var tr = el("tr");
+            var short = p.txid.length > 18 ? p.txid.slice(0, 10) + "…" + p.txid.slice(-6) : p.txid;
+            var tdTx = el("td", "mono txid-cell", short);
+            tdTx.setAttribute("data-label", "TXID");
+            tdTx.title = "Tap to copy the full TXID";
+            tdTx.addEventListener("click", function () { copyText(p.txid, "Full TXID copied"); });
+            var tdGems = el("td", null, fmtNum(p.gems)); tdGems.setAttribute("data-label", "Gems");
+            var tdAmt = el("td", null, p.amountUSDT === null || p.amountUSDT === undefined ? "—" : "$" + Number(p.amountUSDT).toFixed(2)); tdAmt.setAttribute("data-label", "Amount (USDT)");
+            var tdTime = el("td", null, fmtDate(p.at)); tdTime.setAttribute("data-label", "Time");
+            [tdTx, tdGems, tdAmt, tdTime].forEach(function (td) { tr.appendChild(td); });
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody);
+          body.appendChild(table);
+        }).catch(function (err) {
+          body.innerHTML = "";
+          var e = el("p", "status err", err.message);
+          e.setAttribute("role", "status");
+          body.appendChild(e);
+        });
+      }
+      $("payments-refresh").addEventListener("click", loadPayments);
+
+      /* ================= (d) Shop catalog ================= */
+      var catalogState = null;
+      function builtinCatalog() {
+        var cat = {};
+        TAB_ORDER.forEach(function (tab) {
+          cat[tab] = BUILTIN[tab].map(function (item, i) {
+            return { index: i, name: item[0], price: item[1], visible: true };
+          });
+        });
+        return cat;
+      }
+      function normalizeCatalog(raw) {
+        if (!raw || typeof raw !== "object") return null;
+        var cat = {};
+        for (var t = 0; t < TAB_ORDER.length; t++) {
+          var tab = TAB_ORDER[t];
+          if (!Array.isArray(raw[tab])) return null;
+          cat[tab] = raw[tab].map(function (item, i) {
+            return {
+              index: Number.isInteger(item.index) ? item.index : i,
+              name: String(item.name || ""),
+              price: Number(item.price) || 0,
+              visible: item.visible !== false
+            };
+          });
+        }
+        return cat;
+      }
+      function renderCatalog() {
+        var body = $("shop-body");
+        body.innerHTML = "";
+        if (!catalogState) { body.appendChild(el("p", "status info", "Loading…")); return; }
+        TAB_ORDER.forEach(function (tab) {
+          var group = el("div", "shop-group");
+          var h = el("h3", null, TAB_LABELS[tab].toUpperCase());
+          h.appendChild(el("span", "count", catalogState[tab].length + " items"));
+          group.appendChild(h);
+          var rows = el("div", "shop-rows");
+          catalogState[tab].forEach(function (item) {
+            var row = el("div", "shop-row" + (item.visible ? "" : " hidden-item"));
+            row.appendChild(el("span", "item-idx", "#" + item.index));
+            row.appendChild(el("span", "item-name", item.name));
+            var pw = el("div", "price-wrap");
+            var input = document.createElement("input");
+            input.type = "number"; input.min = "0"; input.step = "1";
+            input.className = "field"; input.value = String(item.price);
+            input.setAttribute("aria-label", "Price in gems for " + item.name);
+            input.addEventListener("change", function () {
+              var v = Math.max(0, Math.floor(Number(input.value) || 0));
+              input.value = String(v);
+              item.price = v;
+              renderFreeBadge();
+            });
+            pw.appendChild(input);
+            pw.appendChild(el("span", "unit", "gems"));
+            row.appendChild(pw);
+            var sw = el("label", "switch");
+            var cb = document.createElement("input");
+            cb.type = "checkbox"; cb.checked = item.visible;
+            cb.setAttribute("aria-label", "Show " + item.name + " in the shop");
+            var swLabel = el("span", "switch-label", item.visible ? "Shown" : "Hidden");
+            cb.addEventListener("change", function () {
+              item.visible = cb.checked;
+              swLabel.textContent = cb.checked ? "Shown" : "Hidden";
+              row.classList.toggle("hidden-item", !cb.checked);
+            });
+            sw.appendChild(cb);
+            sw.appendChild(el("span", "track"));
+            sw.appendChild(swLabel);
+            row.appendChild(sw);
+            rows.appendChild(row);
+          });
+          group.appendChild(rows);
+          body.appendChild(group);
+        });
+        function renderFreeBadge() { /* price 0 already reads as free in the game */ }
+      }
+      function loadCatalog(manual) {
+        var statusNode = manual ? $("shop-save-status") : null;
+        api(GIFT_WORKER, "/catalog", null, "GET").then(function (data) {
+          var cat = normalizeCatalog(data.catalog);
+          if (cat) {
+            catalogState = cat;
+            if (manual) setStatus($("shop-save-status"), "Loaded the catalog saved on the server.", "ok");
+          } else {
+            catalogState = builtinCatalog();
+            if (manual) setStatus($("shop-save-status"), "No catalog saved on the server yet — showing the game's built-in catalog.", "info");
+          }
+          renderCatalog();
+        }).catch(function (err) {
+          catalogState = builtinCatalog();
+          renderCatalog();
+          setStatus($("shop-save-status"), "Could not load a saved catalog (" + err.message + ") Showing the game's built-in catalog instead.", "err");
+        });
+      }
+      $("shop-reload").addEventListener("click", function () { loadCatalog(true); });
+      $("shop-save").addEventListener("click", function () {
+        if (!catalogState) return;
+        var btn = this;
+        btn.disabled = true;
+        setStatus($("shop-save-status"), "Saving…", "info");
+        api(GIFT_WORKER, "/catalog", { catalog: catalogState }).then(function () {
+          setStatus($("shop-save-status"), "Catalog saved. The game will use these prices and visibility settings.", "ok");
+        }).catch(function (err) {
+          setStatus($("shop-save-status"), err.message, "err");
+        }).then(function () { btn.disabled = false; });
+      });
+
+      /* ================= (e) Settings ================= */
+      function buildPackRows() {
+        var wrap = $("pack-rows");
+        wrap.innerHTML = "";
+        PACK_SIZES.forEach(function (size) {
+          var row = el("div", "pack-row");
+          var label = el("span", "pack-gems", fmtNum(size) + " ");
+          label.appendChild(el("span", "unit", "gems"));
+          row.appendChild(label);
+          row.appendChild(el("span", "dollar", "$"));
+          var input = document.createElement("input");
+          input.type = "number"; input.min = "0"; input.step = "0.01";
+          input.className = "field"; input.id = "pack-" + size;
+          input.setAttribute("aria-label", "Price in USD for " + size + " gems");
+          row.appendChild(input);
+          wrap.appendChild(row);
+        });
+      }
+      function fillSettings(s) {
+        $("set-level").value = String(s.gemRewardPerLevel);
+        $("set-endless").value = String(s.gemRewardEndlessPer500m);
+        $("set-free").value = String(s.freeGemsPerHour);
+        PACK_SIZES.forEach(function (size) {
+          var v = s.packPrices ? s.packPrices[String(size)] : undefined;
+          $("pack-" + size).value = v === undefined ? String(DEFAULT_SETTINGS.packPrices[String(size)]) : String(v);
+        });
+      }
+      function loadSettings(manual) {
+        api(GIFT_WORKER, "/settings", null, "GET").then(function (data) {
+          if (data.settings && typeof data.settings === "object") {
+            var merged = {
+              gemRewardPerLevel: Number(data.settings.gemRewardPerLevel ?? DEFAULT_SETTINGS.gemRewardPerLevel),
+              gemRewardEndlessPer500m: Number(data.settings.gemRewardEndlessPer500m ?? DEFAULT_SETTINGS.gemRewardEndlessPer500m),
+              freeGemsPerHour: Number(data.settings.freeGemsPerHour ?? DEFAULT_SETTINGS.freeGemsPerHour),
+              packPrices: data.settings.packPrices || DEFAULT_SETTINGS.packPrices
+            };
+            fillSettings(merged);
+            if (manual) setStatus($("settings-status"), "Loaded the settings saved on the server.", "ok");
+          } else {
+            fillSettings(DEFAULT_SETTINGS);
+            if (manual) setStatus($("settings-status"), "No settings saved on the server yet — showing the game's defaults.", "info");
+          }
+        }).catch(function (err) {
+          fillSettings(DEFAULT_SETTINGS);
+          setStatus($("settings-status"), "Could not load saved settings (" + err.message + ") Showing the game's defaults.", "err");
+        });
+      }
+      $("settings-reload").addEventListener("click", function () { loadSettings(true); });
+      $("settings-save").addEventListener("click", function () {
+        var level = Number($("set-level").value);
+        var endless = Number($("set-endless").value);
+        var free = Number($("set-free").value);
+        if ([level, endless, free].some(function (v) { return !Number.isFinite(v) || v < 0; })) {
+          setStatus($("settings-status"), "Reward fields must be numbers of 0 or more.", "err");
+          return;
+        }
+        var packPrices = {};
+        for (var i = 0; i < PACK_SIZES.length; i++) {
+          var size = PACK_SIZES[i];
+          var v = Number($("pack-" + size).value);
+          if (!Number.isFinite(v) || v < 0) { setStatus($("settings-status"), "Every pack price must be a number of 0 or more.", "err"); return; }
+          packPrices[String(size)] = Math.round(v * 100) / 100;
+        }
+        var settings = {
+          gemRewardPerLevel: Math.floor(level),
+          gemRewardEndlessPer500m: Math.floor(endless),
+          freeGemsPerHour: Math.floor(free),
+          packPrices: packPrices
+        };
+        var btn = this;
+        btn.disabled = true;
+        setStatus($("settings-status"), "Saving…", "info");
+        api(GIFT_WORKER, "/settings", { settings: settings }).then(function () {
+          setStatus($("settings-status"), "Settings saved. The game will use these rewards and pack prices.", "ok");
+        }).catch(function (err) {
+          setStatus($("settings-status"), err.message, "err");
+        }).then(function () { btn.disabled = false; });
+      });
+
+      /* ================= (f) Ads ================= */
+      var DEFAULT_ADS = {
+        adsEnabled: false,
+        network: "adsterra",
+        adsterra: { nativeCode: "", socialBarCode: "", directLink: "" },
+        monetag: { vignetteCode: "", inPagePushCode: "", nativeCode: "", smartLink: "" }
+      };
+      function adsPick(obj, keys) {
+        if (!obj || typeof obj !== "object") return "";
+        var i, v;
+        for (i = 0; i < keys.length; i++) {
+          v = obj[keys[i]];
+          if (typeof v === "string" && v !== "") return v;
+        }
+        for (i = 0; i < keys.length; i++) {
+          v = obj[keys[i]];
+          if (typeof v === "string") return v;
+        }
+        return "";
+      }
+      function normalizeAds(raw) {
+        if (!raw || typeof raw !== "object") return null;
+        var network = raw.network === "monetag" ? "monetag" : "adsterra";
+        var aRaw = (raw.adsterra && typeof raw.adsterra === "object") ? raw.adsterra : {};
+        var mRaw = (raw.monetag && typeof raw.monetag === "object") ? raw.monetag : {};
+        var adsterra = {
+          nativeCode: adsPick(aRaw, ["nativeCode", "native"]),
+          socialBarCode: adsPick(aRaw, ["socialBarCode", "socialBar", "social"]),
+          directLink: adsPick(aRaw, ["directLink", "directLinkUrl", "link"])
+        };
+        /* Old Adsterra saves kept a fixed-size bannerCode — carry it into
+           nativeCode only when nativeCode is empty, so old codes are not
+           lost. */
+        if (!adsterra.nativeCode) adsterra.nativeCode = adsPick(aRaw, ["bannerCode", "banner"]);
+        var monetag = {
+          vignetteCode: adsPick(mRaw, ["vignetteCode", "vignette", "bannerCode", "banner"]),
+          inPagePushCode: adsPick(mRaw, ["inPagePushCode", "inPagePush", "socialBarCode", "socialBar", "social"]),
+          nativeCode: adsPick(mRaw, ["nativeCode", "native"]),
+          smartLink: adsPick(mRaw, ["smartLink", "smartlink", "directLink", "directLinkUrl", "link"])
+        };
+        /* Old flat config: top-level bannerCode / nativeCode /
+           socialBarCode / directLink alongside a network. Map it into
+           the group that network belongs to, without overwriting any
+           value a nested group already supplied. */
+        var hasFlat = typeof raw.bannerCode === "string" || typeof raw.nativeCode === "string" ||
+          typeof raw.socialBarCode === "string" || typeof raw.directLink === "string";
+        if (hasFlat) {
+          if (network === "monetag") {
+            if (!monetag.vignetteCode) monetag.vignetteCode = adsPick(raw, ["bannerCode", "banner"]);
+            if (!monetag.inPagePushCode) monetag.inPagePushCode = adsPick(raw, ["nativeCode", "native", "socialBarCode", "socialBar", "social"]);
+            if (!monetag.smartLink) monetag.smartLink = adsPick(raw, ["directLink", "directLinkUrl", "link"]);
+          } else {
+            if (!adsterra.nativeCode) adsterra.nativeCode = adsPick(raw, ["nativeCode", "native", "bannerCode", "banner"]);
+            if (!adsterra.socialBarCode) adsterra.socialBarCode = adsPick(raw, ["socialBarCode", "socialBar", "social"]);
+            if (!adsterra.directLink) adsterra.directLink = adsPick(raw, ["directLink", "directLinkUrl", "link"]);
+          }
+        }
+        return {
+          adsEnabled: raw.adsEnabled === true,
+          network: network,
+          adsterra: adsterra,
+          monetag: monetag
+        };
+      }
+      function fillAds(a) {
+        var adsterra = (a && a.adsterra) || DEFAULT_ADS.adsterra;
+        var monetag = (a && a.monetag) || DEFAULT_ADS.monetag;
+        $("ads-enabled").checked = !!a.adsEnabled;
+        $("ads-enabled-label").textContent = a.adsEnabled ? "ON" : "OFF";
+        $("ads-network").value = a.network === "monetag" ? "monetag" : "adsterra";
+        $("ads-native").value = adsterra.nativeCode || "";
+        $("ads-social").value = adsterra.socialBarCode || "";
+        $("ads-direct").value = adsterra.directLink || "";
+        $("ads-monetag-vignette").value = monetag.vignetteCode || "";
+        $("ads-monetag-inpage").value = monetag.inPagePushCode || "";
+        $("ads-monetag-inpage-native").value = monetag.nativeCode || "";
+        $("ads-monetag-smartlink").value = monetag.smartLink || "";
+      }
+      function readAdsForm() {
+        return {
+          adsEnabled: $("ads-enabled").checked,
+          network: $("ads-network").value === "monetag" ? "monetag" : "adsterra",
+          adsterra: {
+            nativeCode: $("ads-native").value,
+            socialBarCode: $("ads-social").value,
+            directLink: $("ads-direct").value.trim()
+          },
+          monetag: {
+            vignetteCode: $("ads-monetag-vignette").value,
+            inPagePushCode: $("ads-monetag-inpage").value,
+            nativeCode: $("ads-monetag-inpage-native").value,
+            smartLink: $("ads-monetag-smartlink").value.trim()
+          }
+        };
+      }
+      function loadAds(manual) {
+        api(GIFT_WORKER, "/ads", null, "GET").then(function (data) {
+          var ads = normalizeAds(data.ads || data);
+          if (ads) {
+            fillAds(ads);
+            if (manual) setStatus($("ads-status"), "Loaded the ad settings saved on the server.", "ok");
+            else setStatus($("ads-status"), "", "");
+          } else {
+            fillAds(DEFAULT_ADS);
+            if (manual) setStatus($("ads-status"), "No ad settings saved on the server yet — fields are empty. Paste your codes and tap Save ads.", "info");
+            else setStatus($("ads-status"), "No ad settings saved on the server yet — fields are empty. Paste your codes and tap Save ads.", "info");
+          }
+        }).catch(function (err) {
+          fillAds(DEFAULT_ADS);
+          setStatus($("ads-status"), "Could not load saved ad settings (" + err.message + ") Fields are empty — if the updated gift Worker has not been pasted yet, the /ads route will not answer.", "err");
+        });
+      }
+      $("ads-enabled").addEventListener("change", function () {
+        $("ads-enabled-label").textContent = this.checked ? "ON" : "OFF";
+      });
+      $("ads-reload").addEventListener("click", function () { loadAds(true); });
+      $("ads-reload-top").addEventListener("click", function () { loadAds(true); });
+      $("ads-save").addEventListener("click", function () {
+        var ads = readAdsForm();
+        if (ads.adsterra.directLink && !/^https?:\/\//i.test(ads.adsterra.directLink)) {
+          setStatus($("ads-status"), "Adsterra Direct Link URL must start with http:// or https:// — or leave it empty.", "err");
+          return;
+        }
+        if (ads.monetag.smartLink && !/^https?:\/\//i.test(ads.monetag.smartLink)) {
+          setStatus($("ads-status"), "Monetag SmartLink URL must start with http:// or https:// — or leave it empty. Nothing was saved.", "err");
+          return;
+        }
+        var btn = this;
+        btn.disabled = true;
+        setStatus($("ads-status"), "Saving…", "info");
+        api(GIFT_WORKER, "/ads", { ads: ads }).then(function () {
+          setStatus($("ads-status"), ads.adsEnabled ? "Ads saved — ON, using " + (ads.network === "monetag" ? "Monetag" : "Adsterra") + ". The game will use these codes on its next load." : "Ads saved — OFF. The game will show no ads and hide the watch-ad buttons.", "ok");
+        }).catch(function (err) {
+          setStatus($("ads-status"), err.message, "err");
+        }).then(function () { btn.disabled = false; });
+      });
+
+      /* ================= (g) Upload Items ================= */
+      var MAX_UPLOAD_BYTES = 500 * 1024;
+      var uploadImageDataUrl = "";
+      var uploadImageName = "";
+      var ITEM_TAB_LABELS = { arrows: "Arrows", trails: "Trails", colours: "Colours", colors: "Colours", themes: "Themes" };
+      function uploadUnlockInfo(item) {
+        var raw = String(item.unlockType || item.unlock || item.type || "free").toLowerCase();
+        if (raw === "paid" || raw === "gems" || raw === "gem") {
+          var price = Number(item.price !== undefined ? item.price : (item.gems !== undefined ? item.gems : item.priceGems)) || 0;
+          return { key: "paid", label: "Paid", badge: "paid", price: price, priceText: price ? fmtNum(price) + " gems" : "—" };
+        }
+        if (raw === "ads" || raw === "ad" || raw === "trial" || raw === "ads_trial" || raw === "adstrial") {
+          return { key: "ads", label: "Ads trial — temporary", badge: "ads", price: 0, priceText: "—" };
+        }
+        return { key: "free", label: "Free", badge: "free", price: 0, priceText: "Free" };
+      }
+      function itemImageSrc(item) {
+        return String(item.imageDataUrl || item.dataUrl || item.image || item.imageUrl || "");
+      }
+      function renderItems(items) {
+        var wrap = $("items-list-wrap");
+        wrap.innerHTML = "";
+        if (!items.length) {
+          wrap.appendChild(el("div", "empty-box", "No custom items uploaded yet. Choose an image above, give it a name, and tap Save item."));
+          return;
+        }
+        var table = el("table", "data");
+        var thead = el("thead");
+        var htr = el("tr");
+        ["Image", "Name", "Tab", "Unlock type", "Price", ""].forEach(function (h) { htr.appendChild(el("th", null, h)); });
+        thead.appendChild(htr);
+        table.appendChild(thead);
+        var tbody = el("tbody");
+        items.forEach(function (item) {
+          var tr = el("tr");
+          var tdImg = el("td"); tdImg.setAttribute("data-label", "Image");
+          var src = itemImageSrc(item);
+          if (src) {
+            var img = document.createElement("img");
+            img.className = "item-thumb";
+            img.src = src;
+            img.alt = item.name ? ("Preview of " + item.name) : "Custom item preview";
+            tdImg.appendChild(img);
+          } else {
+            tdImg.appendChild(el("span", "item-thumb-empty", "No img"));
+          }
+          var tdName = el("td", null, item.name || "Untitled item"); tdName.setAttribute("data-label", "Name");
+          var tabKey = String(item.tab || "").toLowerCase();
+          if (tabKey === "themes" && item.colors && typeof item.colors === "object") {
+            var swWrap = el("span", "palette-swatches");
+            [["primary", "Primary"], ["spike", "Spike"], ["saw", "Saw"]].forEach(function (pair) {
+              var v = item.colors[pair[0]];
+              if (typeof v === "string" && /^#[0-9a-f]{6}$/i.test(v)) {
+                var sw = el("span", "sw");
+                sw.style.background = v;
+                sw.title = pair[1] + ": " + v;
+                swWrap.appendChild(sw);
+              }
+            });
+            if (swWrap.childNodes.length) tdName.appendChild(swWrap);
+          }
+          var tdTab = el("td", null, ITEM_TAB_LABELS[tabKey] || (item.tab || "—")); tdTab.setAttribute("data-label", "Tab");
+          var unlock = uploadUnlockInfo(item);
+          var tdUnlock = el("td"); tdUnlock.setAttribute("data-label", "Unlock type");
+          tdUnlock.appendChild(el("span", "badge " + unlock.badge, unlock.label));
+          var tdPrice = el("td", null, unlock.key === "paid" ? unlock.priceText : (unlock.key === "free" ? "Free" : "—"));
+          tdPrice.setAttribute("data-label", "Price");
+          var tdAct = el("td"); tdAct.setAttribute("data-label", "");
+          var delBtn = el("button", "btn btn-danger btn-small", "Delete");
+          delBtn.type = "button";
+          delBtn.addEventListener("click", function () { deleteItem(item, delBtn); });
+          tdAct.appendChild(delBtn);
+          [tdImg, tdName, tdTab, tdUnlock, tdPrice, tdAct].forEach(function (td) { tr.appendChild(td); });
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        wrap.appendChild(table);
+      }
+      function loadItems(manual) {
+        var wrap = $("items-list-wrap");
+        wrap.innerHTML = "";
+        var st = el("p", "status info", "Loading…");
+        st.id = "items-status"; st.setAttribute("role", "status");
+        wrap.appendChild(st);
+        api(GIFT_WORKER, "/items", null, "GET").then(function (data) {
+          var items = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
+          renderItems(items);
+          if (manual) setStatus($("upload-status"), items.length ? "Loaded " + items.length + " custom item" + (items.length === 1 ? "" : "s") + " from the server." : "No custom items on the server yet.", "ok");
+        }).catch(function (err) {
+          wrap.innerHTML = "";
+          var e = el("p", "status err", "Could not load custom items (" + err.message + ") If the updated gift Worker has not been pasted and deployed yet, the /items route will not answer.");
+          e.setAttribute("role", "status");
+          wrap.appendChild(e);
+        });
+      }
+      function deleteItem(item, btn) {
+        var id = item.id !== undefined ? item.id : (item.itemId !== undefined ? item.itemId : item._id);
+        if (id === undefined || id === null || id === "") {
+          setStatus($("upload-status"), "This item has no id from the server, so it cannot be deleted yet.", "err");
+          return;
+        }
+        btn.disabled = true;
+        var original = btn.textContent;
+        btn.textContent = "Deleting…";
+        api(GIFT_WORKER, "/items/delete", { id: id }).then(function () {
+          toast("Item deleted: " + (item.name || "custom item"));
+          setStatus($("upload-status"), "Deleted “" + (item.name || "custom item") + "”.", "ok");
+          loadItems(false);
+        }).catch(function (err) {
+          setStatus($("upload-status"), err.message, "err");
+          btn.disabled = false;
+          btn.textContent = original;
+        });
+      }
+      function resetUploadImage(msg) {
+        uploadImageDataUrl = "";
+        uploadImageName = "";
+        var preview = $("upload-preview");
+        preview.innerHTML = "";
+        preview.appendChild(el("span", null, "No image chosen yet"));
+        $("upload-file-meta").textContent = "";
+        if (msg) $("upload-image-error").textContent = msg;
+      }
+      $("upload-image").addEventListener("change", function () {
+        $("upload-image-error").textContent = "";
+        var file = this.files && this.files[0];
+        if (!file) { resetUploadImage(""); return; }
+        if (file.size > MAX_UPLOAD_BYTES) {
+          var sizeKb = Math.round(file.size / 1024);
+          this.value = "";
+          resetUploadImage("Image is too large: " + file.name + " is " + sizeKb + "KB. The maximum is 500KB — please choose a smaller image.");
+          setStatus($("upload-status"), "Image too large — maximum 500KB. Nothing was uploaded.", "err");
+          return;
+        }
+        if (!/^image\//i.test(file.type || "")) {
+          this.value = "";
+          resetUploadImage("That file is not an image. Please choose a PNG, JPG or WebP image.");
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function () {
+          uploadImageDataUrl = String(reader.result || "");
+          uploadImageName = file.name;
+          var preview = $("upload-preview");
+          preview.innerHTML = "";
+          var img = document.createElement("img");
+          img.src = uploadImageDataUrl;
+          img.alt = "Preview of the item image you are about to upload";
+          preview.appendChild(img);
+          $("upload-file-meta").textContent = file.name + " — " + Math.max(1, Math.round(file.size / 1024)) + "KB, ready to save.";
+          $("upload-image-error").textContent = "";
+          setStatus($("upload-status"), "", "");
+        };
+        reader.onerror = function () {
+          resetUploadImage("Could not read that image file. Please try a different image.");
+        };
+        reader.readAsDataURL(file);
+      });
+      $("upload-unlock").addEventListener("change", function () {
+        $("upload-price-wrap").hidden = this.value !== "paid";
+        if (this.value === "paid") $("upload-price").focus();
+      });
+      /* Theme palette: the colour fields only apply to Themes uploads,
+         so they show only while the Themes tab is selected. Applies to
+         every other tab the same way the unlock choice does — the form
+         itself is shared by Arrows, Trails, Colours and Themes. */
+      var THEME_COLOR_DEFAULTS = { primary: "#22d3ee", spike: "#f472b6", saw: "#a3e635" };
+      function syncThemeColorsVisibility() {
+        $("upload-theme-colors").hidden = $("upload-tab").value !== "themes";
+      }
+      $("upload-tab").addEventListener("change", syncThemeColorsVisibility);
+      [["primary"], ["spike"], ["saw"]].forEach(function (pair) {
+        var key = pair[0];
+        var picker = $("upload-color-" + key);
+        var text = $("upload-color-" + key + "-text");
+        picker.addEventListener("input", function () { text.value = picker.value; });
+        text.addEventListener("input", function () {
+          var v = text.value.trim();
+          if (/^#[0-9a-f]{6}$/i.test(v)) picker.value = v.toLowerCase();
+        });
+      });
+      function readThemeColor(key) {
+        /* The hex box wins when it holds a valid colour; left empty (or
+           invalid), the picker's sensible default is used instead. */
+        var v = $("upload-color-" + key + "-text").value.trim();
+        if (/^#[0-9a-f]{6}$/i.test(v)) return v.toLowerCase();
+        if (/^[0-9a-f]{6}$/i.test(v)) return ("#" + v).toLowerCase();
+        var pv = $("upload-color-" + key).value;
+        return /^#[0-9a-f]{6}$/i.test(pv || "") ? pv.toLowerCase() : THEME_COLOR_DEFAULTS[key];
+      }
+      function readThemeColors() {
+        return { primary: readThemeColor("primary"), spike: readThemeColor("spike"), saw: readThemeColor("saw") };
+      }
+      function resetThemeColors() {
+        ["primary", "spike", "saw"].forEach(function (key) {
+          $("upload-color-" + key).value = THEME_COLOR_DEFAULTS[key];
+          $("upload-color-" + key + "-text").value = "";
+        });
+      }
+      $("items-refresh").addEventListener("click", function () { loadItems(true); });
+      $("upload-save").addEventListener("click", function () {
+        var name = $("upload-name").value.trim();
+        var tab = $("upload-tab").value;
+        var unlockType = $("upload-unlock").value;
+        var price = 0;
+        if (!uploadImageDataUrl) {
+          setStatus($("upload-status"), "Choose an image first — tap the image picker and pick a file up to 500KB.", "err");
+          $("upload-image").focus();
+          return;
+        }
+        if (!name) {
+          setStatus($("upload-status"), "Give the item a name first.", "err");
+          $("upload-name").focus();
+          return;
+        }
+        if (unlockType === "paid") {
+          price = Math.floor(Number($("upload-price").value) || 0);
+          if (!price || price < 1) {
+            setStatus($("upload-status"), "Enter a gem price of at least 1 for a Paid item.", "err");
+            $("upload-price").focus();
+            return;
+          }
+        }
+        var payload = {
+          name: name,
+          tab: tab,
+          unlockType: unlockType,
+          unlock: unlockType,
+          price: price,
+          gems: price,
+          imageDataUrl: uploadImageDataUrl,
+          image: uploadImageDataUrl
+        };
+        if (tab === "themes") payload.colors = readThemeColors();
+        var btn = this;
+        btn.disabled = true;
+        setStatus($("upload-status"), "Saving item…", "info");
+        api(GIFT_WORKER, "/items", payload).then(function (data) {
+          var savedName = (data && data.item && data.item.name) || (data && data.name) || name;
+          setStatus($("upload-status"), "Saved “" + savedName + "” — it will appear in the game's " + (ITEM_TAB_LABELS[tab] || tab) + " shop tab.", "ok");
+          toast("Item saved: " + savedName);
+          $("upload-name").value = "";
+          $("upload-price").value = "";
+          $("upload-image").value = "";
+          resetThemeColors();
+          resetUploadImage("");
+          loadItems(false);
+        }).catch(function (err) {
+          setStatus($("upload-status"), err.message, "err");
+        }).then(function () { btn.disabled = false; });
+      });
+
+      /* ================= Boot ================= */
+      buildPicker();
+      syncThemeColorsVisibility();
+      buildPackRows();
+      fillSettings(DEFAULT_SETTINGS);
+      fillAds(DEFAULT_ADS);
+      if (getCredential()) showApp();
+      else showGate();
+    </script>
+  </body>
+</html>
