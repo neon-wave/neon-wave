@@ -12,6 +12,12 @@
     <!-- Telegram Mini App SDK: present on every page load, but it only
          activates when the game is opened inside Telegram. -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- SOCIAL BAR — no code is pasted here. When the admin panel's
+         ad settings enable ads, the game injects the social-bar
+         code at runtime from the server ad config (GET /ads — see
+         applyServerAds() in the script) into the on-screen social
+         bar pinned to the bottom edge of the page (#socialBar). -->
+
     <style>
       :root {
         --ink: #fff;
@@ -177,7 +183,11 @@
         font-size: clamp(38px, 9vw, 64px);
         letter-spacing: .04em;
         margin: 0;
-        background: linear-gradient(94deg, var(--th-a), var(--th-b), var(--th-c));
+        /* Solid pink/magenta: the PLAY button's own left-edge
+           colour (--th-a, the first stop of its gradient), so
+           the title always matches the button in every theme.
+           In the default theme that is #ff007f hot pink. */
+        background: var(--th-a);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
@@ -651,6 +661,218 @@
         font-size: 10.5px; line-height: 1.25; color: var(--th-a);
       }
 
+      /* ---------- Lives HUD + TRIAL badge ---------- */
+      #hudLeft { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+      #livesBox {
+        display: flex; align-items: center; gap: 3px;
+        background: rgba(8, 0, 18, .55);
+        border: 1px solid rgba(var(--th-a-rgb),.7);
+        border-radius: 999px; padding: 5px 11px;
+        box-shadow: 0 0 10px rgba(var(--th-a-rgb),.5), inset 0 0 8px rgba(var(--th-b-rgb),.2);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+      }
+      #livesBox svg { width: 16px; height: 16px; fill: #ff2e63; filter: drop-shadow(0 0 5px rgba(255,46,99,.85)); display: block; }
+      #livesBox .lost svg { fill: rgba(255,255,255,.25); filter: none; }
+      #trialBadge {
+        font-family: "Orbitron", monospace; font-weight: 700; font-size: 11.5px; letter-spacing: .1em;
+        color: #201300; background: linear-gradient(92deg, #ffd23e, #ff9d00);
+        border: 1.5px solid rgba(255,255,255,.75); border-radius: 999px; padding: 4px 11px;
+        box-shadow: 0 0 14px rgba(255,180,0,.75);
+      }
+      #comboBox {
+        font-family: "Orbitron", monospace; font-weight: 700; font-size: 12.5px; letter-spacing: .08em;
+        color: #eaffff; background: rgba(8, 0, 18, .55);
+        border: 1px solid rgba(var(--th-b-rgb),.7); border-radius: 999px; padding: 5px 11px;
+        text-shadow: 0 0 8px rgba(var(--th-b-rgb),.9);
+        box-shadow: 0 0 10px rgba(var(--th-b-rgb),.45), inset 0 0 8px rgba(var(--th-a-rgb),.2);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+      }
+      /* Locked item cards (Arrows / Trails / Colours) reuse the
+         theme-pack card styling — lock icon, TRIAL tag, state
+         lines and the two unlock buttons — via .themePack. */
+      .shopCell.themePack .cellIcon { pointer-events: none; }
+      .shopCell.themePack .itemName {
+        font-weight: 700; font-size: 14.5px; line-height: 1.25; color: #fff;
+        text-shadow: 0 0 8px rgba(0,0,0,.5); pointer-events: none;
+      }
+
+      /* ---------- Theme pack cards (Themes tab) ----------
+         Styled like the level-select cards: the theme's own
+         colour washes the card, a big number, the theme name,
+         and a clear lock / trial / owned state. */
+      .shopGrid.themesGrid { grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); }
+      .shopCell.themePack {
+        border: 1.5px solid rgba(255,255,255,.55);
+        background: linear-gradient(165deg, var(--zc, var(--th-a)), #1c0536);
+        background: linear-gradient(165deg, var(--zc, var(--th-a)), color-mix(in srgb, var(--zc, var(--th-a)) 38%, #0d0221));
+        box-shadow: inset 0 3px 0 var(--zc, rgba(var(--th-a-rgb),.6)), inset 0 0 14px rgba(var(--th-a-rgb),.10), 0 6px 16px rgba(0,0,0,.3), 0 0 14px var(--zc, rgba(var(--th-a-rgb),.35));
+        min-height: 168px; padding: 10px 8px 9px; gap: 4px;
+        justify-content: flex-start; text-align: center;
+      }
+      .shopCell.themePack:hover { border-color: #ffffff; box-shadow: inset 0 3px 0 var(--zc, rgba(var(--th-a-rgb),.6)), 0 10px 22px rgba(0,0,0,.42), 0 0 26px var(--zc, rgba(var(--th-a-rgb),.65)); }
+      .shopCell.themePack .packNum {
+        font-family: "Orbitron", monospace; font-weight: 900; font-size: 24px; line-height: 1.1;
+        color: #ffffff; text-shadow: 0 0 6px var(--zc, var(--th-a)), 0 0 16px var(--zc, var(--th-a));
+        pointer-events: none;
+      }
+      .shopCell.themePack .packState {
+        font-family: "Orbitron", monospace; font-weight: 700; font-size: 11px; letter-spacing: .08em;
+        color: #eafff1; text-shadow: 0 0 8px rgba(0,60,25,.85), 0 1px 4px rgba(0,0,0,.65);
+        pointer-events: none;
+      }
+      .shopCell.themePack .packState.dim { color: rgba(255,255,255,.85); font-size: 10.5px; line-height: 1.45; letter-spacing: .03em; }
+      .shopCell.themePack .lockIco { position: absolute; top: 7px; right: 8px; width: 19px; height: 19px; pointer-events: none; }
+      .shopCell.themePack .lockIco svg { width: 19px; height: 19px; fill: #fff; filter: drop-shadow(0 0 5px rgba(0,0,0,.8)); }
+      .shopCell.themePack.locked .packNum, .shopCell.themePack.locked .themeName { opacity: .55; }
+      .shopCell.themePack .trialTag {
+        font-family: "Orbitron", monospace; font-weight: 700; font-size: 10.5px; letter-spacing: .12em;
+        color: #201300; background: linear-gradient(92deg, #ffd23e, #ff9d00);
+        border-radius: 999px; padding: 2.5px 10px; pointer-events: none;
+        box-shadow: 0 0 12px rgba(255,180,0,.8);
+      }
+      .packActions { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: auto; }
+      .packBtn {
+        font-family: "Orbitron", monospace; font-weight: 700; font-size: 11.5px; letter-spacing: .03em;
+        color: #20032e; background: linear-gradient(92deg, #ffffff, #ffe9fb);
+        border: 1.5px solid rgba(255,255,255,.85); border-radius: 9px;
+        padding: 8px 6px; min-height: 38px; cursor: pointer; width: 100%;
+        display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.35), 0 0 12px rgba(255,255,255,.35);
+        transition: transform .1s ease, filter .1s ease;
+      }
+      .packBtn svg { width: 12px; height: 12px; flex: 0 0 auto; }
+      .packBtn:hover { filter: brightness(1.07); }
+      .packBtn:active { transform: scale(.96); }
+      .packBtn.alt { background: linear-gradient(92deg, #ffd23e, #ff9d00); }
+      .packBtn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+      /* ---------- Simulated (demo) ad overlay ---------- */
+      #adOverlay {
+        position: fixed; inset: 0; z-index: 120;
+        display: flex; align-items: center; justify-content: center;
+        padding: 18px;
+        background: rgba(2, 0, 8, .9);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+      }
+      .adCard {
+        width: min(430px, 100%); text-align: center;
+        background: linear-gradient(165deg, #22103f, #0f0f1e);
+        border: 1.5px solid rgba(255,255,255,.5); border-radius: 20px;
+        padding: 26px 24px 22px;
+        box-shadow: 0 30px 80px rgba(0,0,0,.75), 0 0 34px rgba(var(--th-a-rgb),.45);
+      }
+      .adPill {
+        display: inline-block; font-family: "Orbitron", monospace; font-weight: 900;
+        font-size: 13px; letter-spacing: .22em; color: #201300;
+        background: linear-gradient(92deg, #ffd23e, #ff9d00);
+        border-radius: 999px; padding: 5px 16px;
+        box-shadow: 0 0 16px rgba(255,180,0,.7);
+      }
+      .adStage {
+        margin: 18px 0 14px; border-radius: 14px; padding: 30px 14px;
+        background: linear-gradient(130deg, var(--th-a), var(--th-b), var(--th-c));
+        color: #160329;
+        box-shadow: inset 0 0 24px rgba(255,255,255,.35), 0 0 22px rgba(var(--th-b-rgb),.5);
+      }
+      .adStage b { display: block; font-family: "Orbitron", monospace; font-size: 24px; letter-spacing: .06em; }
+      .adStage span { font-weight: 700; font-size: 15px; }
+      .adNote { color: #e9dcff; font-size: 15px; line-height: 1.5; margin: 0 0 14px; font-weight: 600; }
+      .adCount {
+        font-family: "Orbitron", monospace; font-weight: 900; font-size: 34px; color: #fff;
+        text-shadow: 0 0 14px rgba(var(--th-b-rgb),.9); margin: 2px 0 10px;
+      }
+      .adTrack { height: 9px; border-radius: 999px; background: rgba(255,255,255,.16); overflow: hidden; margin-bottom: 16px; }
+      #adBar { height: 100%; width: 0%; background: linear-gradient(90deg, #ffd23e, #ff9d00); border-radius: 999px; }
+      .adCancel {
+        background: none; border: none; color: rgba(255,255,255,.75);
+        font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+        padding: 8px 14px; min-height: 40px; text-decoration: underline; text-underline-offset: 3px;
+      }
+
+      /* ---------- Ad placement slots (banner / native) ----------
+         Empty containers the game fills AT RUNTIME from the
+         server ad config (GET /ads, managed in the admin panel) —
+         no ad code is pasted into this file. While a slot has no
+         content it stays completely hidden (:empty), so the menu
+         and shop render exactly as before; once the server config
+         supplies a code, the slot shows and centres whatever the
+         network renders. */
+      .adSlot:empty { display: none; }
+      .adSlot {
+        margin: 14px auto 4px; max-width: 728px; text-align: center;
+        display: flex; align-items: center; justify-content: center;
+        overflow: hidden;
+      }
+      .adSlotShop { margin: 0 0 12px; max-width: none; }
+
+      /* ---------- Hideable ad bars: social bar + in-game native ----------
+         Two slim ad strips in one stack pinned to the BOTTOM edge
+         of the screen, below the corridor: the SOCIAL BAR (on
+         screen on every screen — menu, shop and run alike) and,
+         stacked on top of it during a run only, the NATIVE strip.
+         Both are filled at runtime from the server ad config
+         (GET /ads); while no code has been saved in the admin
+         panel they show as empty placeholder slots. The stack
+         floats above the canvas and the screens, at the bottom
+         edge only — it never reaches the top HUD (progress,
+         hearts, pause, combo) or the arrow's play area.
+         Hiding a bar is VISUAL ONLY — see hideAdBar() in the
+         script: the bar's element and the ad script inside it
+         stay in the DOM and keep running. */
+      #adBars {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 80;
+        display: flex; flex-direction: column;
+        pointer-events: none;
+      }
+      .adBar {
+        position: relative; pointer-events: auto;
+        background: rgba(5, 0, 14, .9);
+        border-top: 1.5px solid rgba(var(--th-b-rgb), .5);
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, .45);
+        overflow: hidden;
+        max-height: 170px; opacity: 1; transform: none;
+        transition: max-height .45s ease, opacity .4s ease, transform .45s ease;
+      }
+      .adBar.barGone {
+        max-height: 0; opacity: 0; transform: translateY(16px);
+        pointer-events: none; border-top-color: transparent; box-shadow: none;
+      }
+      .adBarInner {
+        display: flex; align-items: center; justify-content: center;
+        overflow: hidden; text-align: center;
+      }
+      #socialBarSlot { min-height: 50px; padding-bottom: env(safe-area-inset-bottom); }
+      #gameNativeSlot { min-height: 44px; }
+      .adBarHide {
+        position: absolute; top: 4px; right: 6px; z-index: 2;
+        width: 26px; height: 26px; padding: 0; border-radius: 50%;
+        display: grid; place-items: center;
+        background: rgba(8, 0, 20, .88); color: #fff;
+        border: 1px solid rgba(255, 255, 255, .55);
+        font-family: inherit; font-size: 17px; line-height: 1; cursor: pointer;
+        opacity: 0; pointer-events: none; transition: opacity .35s ease;
+      }
+      .adBar.canHide .adBarHide { opacity: 1; pointer-events: auto; }
+      #showAdsBtn {
+        position: fixed; right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); z-index: 81;
+        font-family: inherit; font-weight: 700; font-size: 12.5px; letter-spacing: .07em;
+        color: #fff; background: rgba(6, 0, 16, .88);
+        border: 1.5px solid rgba(var(--th-b-rgb), .85); border-radius: 999px;
+        padding: 6px 14px; min-height: 32px; cursor: pointer;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, .5), 0 0 12px rgba(var(--th-b-rgb), .35);
+        transition: bottom .3s ease;
+      }
+      /* While any bar is still showing, the pill rides above
+         the bars (see refreshShowAdsBtn): parked in the
+         corner it would cover the remaining bar's × button. */
+      #showAdsBtn.pillUp { bottom: 60px; }
+      /* Custom (server-uploaded) shop items show their image. */
+      .shopCell .cellIcon img.customImg { width: 64px; height: 46px; object-fit: contain; border-radius: 8px; }
+      #previewBox img.customImg { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
+
       /* ---------- Gem store ---------- */
       .packRow {
         display: flex; align-items: center; gap: 12px;
@@ -828,7 +1050,12 @@
         <div id="pct">0%</div>
       </div>
       <div id="hudMeta">
-        <div id="levelName">Level 1</div>
+        <div id="hudLeft">
+          <div id="levelName">Level 1</div>
+          <div id="livesBox" aria-label="Lives left"></div>
+          <div id="comboBox" aria-label="Combo multiplier">COMBO ×1</div>
+          <span id="trialBadge" class="hidden">TRIAL THEME</span>
+        </div>
         <div id="hudBtns">
           <button class="iconBtn" id="soundBtn" aria-label="Toggle sound">
             <svg id="soundOnIco" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>
@@ -847,6 +1074,30 @@
     <div id="holdHint" class="hidden">HOLD to climb &nbsp;·&nbsp; RELEASE to dive</div>
     <div id="toast"></div>
 
+    <!-- HIDEABLE AD BARS — the social bar (bottom edge, on every
+         screen) with the in-game native strip stacked above it
+         during a run only. Both are filled at runtime from the
+         server ad config (GET /ads); until ad code is saved they
+         are empty placeholder slots. Each bar grows a small × a
+         few seconds after it first appears; hiding only collapses
+         the bar visually — the bar's element and the ad script
+         inside it stay in the DOM and keep running (see
+         hideAdBar in the script). The SHOW ADS pill brings any
+         hidden bar back. -->
+    <div id="adBars">
+      <div id="gameNativeWrap" class="hidden">
+        <div class="adBar" id="gameNativeBar">
+          <div class="adBarInner" id="gameNativeSlot"></div>
+          <button class="adBarHide" id="gameNativeHide" type="button" aria-label="Hide this ad">&times;</button>
+        </div>
+      </div>
+      <div class="adBar" id="socialBar">
+        <div class="adBarInner" id="socialBarSlot"></div>
+        <button class="adBarHide" id="socialBarHide" type="button" aria-label="Hide the social bar">&times;</button>
+      </div>
+    </div>
+    <button id="showAdsBtn" class="hidden" type="button">SHOW ADS</button>
+
     <!-- MAIN MENU -->
     <div id="menu" class="screen">
       <div class="panel">
@@ -859,13 +1110,10 @@
           </defs>
           <polyline points="2,11 38,3 74,19 110,3 146,19 182,3 218,19 254,3 290,15 298,11" fill="none" stroke="url(#logoGrad)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
         </svg>
-        <p class="logoSub">Ride the wave through twelve color themes. One touch of a spike, saw or wall — and you shatter.</p>
+        <p class="logoSub">Ride the wave through twelve color themes. You have 1 life per run — one touch of a spike, saw or wall ends the run, but you can revive up to 3 times.</p>
         <div class="modeRow">
           <button class="btn" id="playBtn">▶ PLAY</button>
           <button class="btn cyan" id="endlessBtn">∞ ENDLESS</button>
-        </div>
-        <div class="toggleRow">
-          <button class="toggleBtn" id="practiceBtn">Practice mode (checkpoints)<span class="pill" id="practicePill">OFF</span></button>
         </div>
         <div class="toggleRow" style="margin-top:10px">
           <button class="toggleBtn soundToggle on" id="menuSoundBtn" aria-pressed="true" aria-label="Toggle sound on or off">
@@ -906,6 +1154,9 @@
             REDEEM CODE
           </button>
         </div>
+
+        <!-- BANNER AD SLOT — filled at runtime from the admin panel's ad settings (server GET /ads); stays hidden while empty. Do not paste ad code here. -->
+        <div class="adSlot" id="menuBannerSlot"></div>
 
         <div class="secTitle">Classic — Choose a level</div>
         <div id="levelList"></div>
@@ -975,6 +1226,8 @@
               <svg viewBox="0 0 24 24"><path d="M3 19.5 9.2 10l3.4 4.4L15.4 12 21 19.5H3zM17.6 3.6a2.4 2.4 0 1 1 0 4.8 2.4 2.4 0 0 1 0-4.8z"/></svg>
             </button>
           </div>
+          <!-- NATIVE AD SLOT — filled at runtime from the admin panel's ad settings (server GET /ads); stays hidden while empty. Do not paste ad code here. -->
+          <div class="adSlot adSlotShop" id="shopNativeSlot"></div>
           <div class="shopGrid" id="shopGrid"></div>
         </div>
       </div>
@@ -1029,6 +1282,24 @@
     <!-- OVERLAY (pause / complete / game over) -->
     <div id="overlay" class="screen hidden">
       <div class="panel" id="overlayPanel"></div>
+    </div>
+
+    <!-- AD OVERLAY — every "watch ad" flow (revive, theme trial,
+         item trial) runs this 10-second countdown, then grants the
+         reward. The direct link comes from the server ad config
+         (admin panel, GET /ads): while it is empty the overlay is
+         a clearly-labelled DEMO AD and no link opens; when it is
+         set, showAd() also opens it in a new tab on the player's
+         tap. See showAd() in the script. -->
+    <div id="adOverlay" class="hidden" role="dialog" aria-modal="true" aria-label="Advertisement">
+      <div class="adCard">
+        <span class="adPill" id="adPill">DEMO AD</span>
+        <div class="adStage"><b id="adStageTitle">YOUR AD HERE</b><span id="adStageSub">Neon Wave demo advertisement</span></div>
+        <p class="adNote" id="adNote">This is a <b>simulated demo ad</b> — no real ad network is connected yet. Your reward arrives when the 10-second countdown finishes.</p>
+        <div class="adCount" id="adCount">10</div>
+        <div class="adTrack"><div id="adBar"></div></div>
+        <button class="adCancel" id="adCancel" type="button">Cancel — no reward</button>
+      </div>
     </div>
 
     <script>
@@ -1104,6 +1375,11 @@
         TXID_WALLET: "0x7003a73d0a37524d833d00f65cd8e61e9b987cf9",
         TXID_NETWORK: "BEP20"
       };
+      /* NOTE — ads are NOT configured here. The ad setup (on/off,
+         network, banner / native / social-bar codes and the
+         direct link) is managed from the admin panel and fetched
+         from the gift Worker at load: GET /ads on
+         GIFT_WORKER_URL — see AD_CONFIG and applyServerAds(). */
       function firebaseConfigured() {
         var f = CONFIG.firebase;
         return !!(f.apiKey && f.authDomain && f.projectId && f.appId);
@@ -1152,7 +1428,37 @@
         if (y >= VH) return VH;
         return VH / 2 + (y - VH / 2) * CORRIDOR_K;
       }
-      var ZONE_LEN = 2200;          // endless: world px per color zone
+      /* ---------------- The bounded corridor ----------------
+         The playfield is a DEFINED tunnel, drawn every frame:
+         dark wall bands above and below, each closed by a
+         glowing neon edge in the active theme's colour and
+         studded with the theme's spikes. The inner edges wave
+         gently as x advances — the corridor rises, falls and
+         narrows like the reference screens — and the arrow is
+         clamped / hit against THESE edges (see update()), so
+         it can never leave the corridor. The wave is gentle
+         (max slope well under the arrow's 45° climb), so the
+         corridor is always followable. Phases are re-seeded per
+         run from the level / mode, so each level's corridor
+         wanders differently. */
+      var corrPh = [0.4, 2.1, 1.2, 4.4];
+      function corridorTop(x) {
+        return 58 + 27 * Math.sin(x * 0.0016 + corrPh[0]) + 10 * Math.sin(x * 0.0043 + corrPh[1]);
+      }
+      function corridorBot(x) {
+        return VH - 58 - 27 * Math.sin(x * 0.0013 + corrPh[2]) - 10 * Math.sin(x * 0.0037 + corrPh[3]);
+      }
+      /* Endless: ONE theme per 200 metres. The score counts
+         1 m per 50 world px, so a theme spans 200 × 50 = 10000
+         world px; themes cycle in order 1→12 and wrap back to
+         Theme 1. Obstacles carry their zone's theme index, and
+         the background, arrow and trail all read the same zone
+         theme — so at every 200 m switch the whole set (theme,
+         obstacles, items) changes together, same to same. (The
+         +10 gem reward still lands every 500 m: the milestone
+         check in update() counts its own 25000 world px and
+         does not use ZONE_LEN.) */
+      var ZONE_LEN = 10000;         // endless: world px per theme (200 m)
       var canvas = document.getElementById('game');
       var ctx = canvas.getContext('2d');
       var VW = 960, SCALE = 1;
@@ -1169,8 +1475,37 @@
          backdrop above and below it (YOFF). Gameplay geometry
          is unchanged — only how much of the world is shown. */
       var MIN_VW = 660;
+      /* ---------------- Mobile performance ----------------
+         The game stuttered on phones but not on PC: phones were
+         rendering the canvas at 2x–3x device pixel ratio and
+         paying full price for every glow, gradient and particle
+         on a much weaker GPU. So, on touch devices ONLY:
+           · the canvas DPR is capped (1.5, or 1 on low-end
+             phones — few cores / little memory), while desktop
+             keeps its crisp 2x cap and identical look;
+           · MOBILE_FX trims the most expensive per-frame canvas
+             work — shadowBlur glow is scaled down (fxBlur),
+             spike gradients become flat fills, the death burst
+             and menu decorations use fewer elements;
+           · the vignette gradient and the arrow's color-item
+             gradient are created once and cached (all devices —
+             invisible, pure saving).
+         The diamond-lattice and block patterns were already
+         cached per theme (latticeOf / patternOf) and the frame
+         loop already runs on clamped delta time; nothing here
+         changes a single colour or shape on desktop. */
+      var IS_TOUCH = false, LOW_END = false;
+      try { IS_TOUCH = !!((window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window)); } catch (e) { /* desktop default */ }
+      try {
+        var hwCores = navigator.hardwareConcurrency || 8;
+        var devMem = navigator.deviceMemory || 8;
+        LOW_END = IS_TOUCH && (hwCores <= 4 || devMem <= 2);
+      } catch (e) { /* keep LOW_END false */ }
+      var MOBILE_FX = IS_TOUCH;
+      var DPR_CAP = IS_TOUCH ? (LOW_END ? 1 : 1.5) : 2;
+      function fxBlur(v) { return MOBILE_FX ? Math.round(v * 0.35) : v; }
       function resize() {
-        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
         canvas.width = Math.round(window.innerWidth * dpr);
         canvas.height = Math.round(window.innerHeight * dpr);
         canvas.style.width = window.innerWidth + 'px';
@@ -1227,42 +1562,363 @@
         src.connect(f); f.connect(g); g.connect(ac.destination);
         src.start();
       }
-      /* The music, recreated like the original game's: a
-         continuous, driving, upbeat synth loop — four-on-the-
-         floor kick, off-beat hats, snare cracks, a pulsing
-         eighth-note bass and a square-wave arp cycling an
-         Am–F–C–G progression. No vocals. It runs in the menu
-         and in play alike; the sound toggle mutes it. */
-      var MUSIC_BPM = 142;
-      var CHORDS = [
-        { root: 55.00, arp: [220.00, 261.63, 329.63, 440.00] },   // A minor
-        { root: 43.65, arp: [174.61, 220.00, 261.63, 349.23] },   // F major
-        { root: 65.41, arp: [261.63, 329.63, 392.00, 523.25] },   // C major
-        { root: 49.00, arp: [196.00, 246.94, 293.66, 392.00] }    // G major
+      /* ---------------- Per-theme music ----------------
+         TWELVE procedural tracks, one per theme, all played
+         by the tiny Web Audio synth below — no audio files,
+         no downloads, no vocals. Each MUSIC_TRACKS entry is a
+         data pattern in theme order:
+           name, bpm — track title and tempo;
+           root — the tonic as a MIDI note (bass register);
+           scale — the mode, as semitone steps from the tonic;
+           chords — 4 chord roots, one per bar, each a scale
+             degree; the bass, pad and lead all follow the
+             bar's chord root;
+           bass — 8 eighth-steps (1 = hit, 0 = rest);
+             bassOctStep = the one step per bar where the bass
+             jumps an octave (-1 = never); bassWave / bassVol /
+             bassDur (note length: short = punchy, long =
+             smooth);
+           lead — 8 eighth-steps of melody offsets, in scale
+             degrees from the bar's chord root, played two
+             octaves up (-1 = rest); leadWave / leadVol /
+             leadDur (short = plucky, long = singing);
+           kick / snare / hat — 8 eighth-steps each (1/0),
+             each with its own volume (kickVol / snareVol /
+             hatVol) so the drums hit differently per track;
+           arp — 8 eighth-steps of arpeggio offsets (-1 =
+             rest), played as short off-16th notes between
+             the eighth steps (arpWave / arpVol); null = no
+             arpeggio, so some tracks drive with a 16th-note
+             arp and others breathe without one;
+           swing — off-8th notes land late by this fraction
+             of a step (0 = straight, ~0.14 = swung groove);
+           pad / padVol / padWave — a soft chord swell on
+             step 0 of every bar (false = no pad at all, so
+             dry tracks stay dry).
+         The tracks differ in INSTRUMENT, not just tempo:
+         square bass vs sine bass vs saw bass, plucky short
+         leads vs long singing leads, four-on-the-floor vs
+         half-time vs syncopated drums, arpeggio vs none,
+         straight vs swung, pad vs dry — so no two tracks
+         sound alike. The mix is LOUD now (kick ~0.34,
+         snare ~0.16, bass ~0.11, lead ~0.07, pad ~0.05)
+         and the music bus runs through a gentle
+         compressor, so the summed peaks stay punchy
+         without clipping. Every music note runs through
+         the single musicBus gain node, so a track switch
+         can fade the whole bus; SFX (tone / noiseBurst)
+         bypass the bus and go straight to the destination,
+         unchanged. */
+      var SC_MINOR = [0, 2, 3, 5, 7, 8, 10];
+      var SC_MAJOR = [0, 2, 4, 5, 7, 9, 11];
+      var SC_PHRYGIAN = [0, 1, 3, 5, 7, 8, 10];
+      var SC_HARMMIN = [0, 2, 3, 5, 7, 8, 11];
+      var SC_MAJPENT = [0, 2, 4, 7, 9];
+      var SC_DORIAN = [0, 2, 3, 5, 7, 9, 10];
+      var SC_MIXO = [0, 2, 4, 5, 7, 9, 10];
+      var SC_MINPENT = [0, 3, 5, 7, 10];
+      var SC_BLUES = [0, 3, 5, 6, 7, 10];
+      var MUSIC_TRACKS = [
+        // 1 · NEON BOSS BATTLE — bold and dramatic, A minor, saw lead, four-on-the-floor + driving 16th arp
+        { name: 'BOSS DRIVE', bpm: 150, root: 33, scale: SC_MINOR, chords: [0, 5, 2, 6],
+          bass: [1, 0, 1, 0, 1, 0, 1, 0], bassOctStep: 4, bassWave: 'square', bassVol: 0.11, bassDur: 0.16,
+          lead: [0, 2, 4, 2, 7, 4, 2, 4], leadWave: 'sawtooth', leadVol: 0.075, leadDur: 0.14,
+          arp: [7, 4, 7, 9, 7, 4, 9, 7], arpWave: 'sawtooth', arpVol: 0.04, swing: 0,
+          kick: [1, 0, 1, 0, 1, 0, 1, 0], kickVol: 0.36, snare: [0, 0, 1, 0, 0, 0, 1, 0], snareVol: 0.16, hat: [0, 1, 0, 1, 0, 1, 0, 1], hatVol: 0.05,
+          pad: true, padVol: 0.04, padWave: 'triangle' },
+        // 2 · SYNTHWAVE SUNSET — dreamy synthwave, C major, long sine bass + singing triangle lead, half-time, lush pad, gentle swing
+        { name: 'SUNSET CRUISE', bpm: 104, root: 36, scale: SC_MAJOR, chords: [0, 4, 5, 3],
+          bass: [1, 0, 0, 0, 0, 0, 1, 0], bassOctStep: -1, bassWave: 'sine', bassVol: 0.11, bassDur: 0.5,
+          lead: [4, 2, 0, 2, -1, 2, 4, -1], leadWave: 'triangle', leadVol: 0.07, leadDur: 0.5,
+          arp: null, swing: 0.1,
+          kick: [1, 0, 0, 0, 0, 0, 0, 0], kickVol: 0.3, snare: [0, 0, 0, 0, 1, 0, 0, 0], snareVol: 0.13, hat: [0, 0, 1, 0, 0, 0, 1, 0], hatVol: 0.04,
+          pad: true, padVol: 0.055, padWave: 'triangle' },
+        // 3 · LASER TEAL-PINK — sleek and fast, E minor, staccato square lead, hats on every eighth + 16th arp
+        { name: 'LASER RUSH', bpm: 148, root: 40, scale: SC_MINOR, chords: [0, 3, 5, 4],
+          bass: [1, 1, 0, 1, 1, 0, 1, 0], bassOctStep: 6, bassWave: 'sawtooth', bassVol: 0.10, bassDur: 0.13,
+          lead: [7, 4, 2, 4, 7, 9, 7, 4], leadWave: 'square', leadVol: 0.07, leadDur: 0.09,
+          arp: [7, 9, 7, 4, 7, 9, 4, 7], arpWave: 'square', arpVol: 0.045, swing: 0,
+          kick: [1, 0, 1, 0, 1, 0, 1, 0], kickVol: 0.34, snare: [0, 0, 1, 0, 0, 0, 1, 0], snareVol: 0.16, hat: [1, 1, 1, 1, 1, 1, 1, 1], hatVol: 0.05,
+          pad: true, padVol: 0.03, padWave: 'triangle' },
+        // 4 · TOXIC LIME — punchy and edgy, F# phrygian, syncopated kick + bass, plucky square lead
+        { name: 'TOXIC PULSE', bpm: 138, root: 30, scale: SC_PHRYGIAN, chords: [0, 0, 1, 3],
+          bass: [1, 0, 1, 1, 0, 1, 0, 1], bassOctStep: 3, bassWave: 'sawtooth', bassVol: 0.11, bassDur: 0.15,
+          lead: [0, 1, 0, 3, -1, 3, 1, 0], leadWave: 'square', leadVol: 0.07, leadDur: 0.09,
+          arp: null, swing: 0,
+          kick: [1, 0, 0, 1, 0, 0, 1, 0], kickVol: 0.36, snare: [0, 0, 1, 0, 0, 0, 1, 0], snareVol: 0.16, hat: [0, 1, 0, 1, 0, 1, 0, 1], hatVol: 0.05,
+          pad: true, padVol: 0.035, padWave: 'triangle' },
+        // 5 · ARCADE AFTERGLOW — warm and groovy, G major, swung triangle groove, soft pad
+        { name: 'AFTERGLOW GROOVE', bpm: 118, root: 43, scale: SC_MAJOR, chords: [0, 3, 4, 5],
+          bass: [1, 0, 0, 1, 0, 1, 0, 0], bassOctStep: -1, bassWave: 'triangle', bassVol: 0.11, bassDur: 0.22,
+          lead: [2, 4, 7, 4, 9, 7, 4, 2], leadWave: 'triangle', leadVol: 0.07, leadDur: 0.2,
+          arp: null, swing: 0.14,
+          kick: [1, 0, 0, 1, 1, 0, 0, 0], kickVol: 0.32, snare: [0, 0, 1, 0, 0, 0, 1, 0], snareVol: 0.15, hat: [0, 1, 0, 1, 0, 1, 0, 1], hatVol: 0.045,
+          pad: true, padVol: 0.045, padWave: 'triangle' },
+        // 6 · BUBBLEGUM ARCADE — bright and bouncy, C major pentatonic, octave-hop bass, very plucky lead, NO pad (dry and playful)
+        { name: 'BUBBLE POP', bpm: 132, root: 36, scale: SC_MAJPENT, chords: [0, 3, 4, 1],
+          bass: [1, 0, 1, 0, 1, 0, 1, 0], bassOctStep: 4, bassWave: 'square', bassVol: 0.11, bassDur: 0.12,
+          lead: [5, 2, 0, 2, 5, 4, 2, 0], leadWave: 'square', leadVol: 0.075, leadDur: 0.08,
+          arp: [2, 4, 2, 5, 2, 4, 5, 4], arpWave: 'triangle', arpVol: 0.04, swing: 0,
+          kick: [1, 0, 1, 0, 1, 0, 1, 0], kickVol: 0.34, snare: [0, 0, 1, 0, 0, 0, 1, 0], snareVol: 0.16, hat: [0, 1, 0, 1, 0, 1, 0, 1], hatVol: 0.05,
+          pad: false, padVol: 0 },
+        // 7 · NOIR PIXEL RACER — dark and driving, D harmonic minor, bass on every eighth, long saw lead, minimal pad
+        { name: 'MIDNIGHT DRIVE', bpm: 128, root: 38, scale: SC_HARMMIN, chords: [0, 5, 3, 4],
+          bass: [1, 1, 1, 1, 1, 1, 1, 1], bassOctStep: 7, bassWave: 'square', bassVol: 0.10, bassDur: 0.14,
+          lead: [0, 2, 3, 2, 6, 3, 2, 0], leadWave: 'sawtooth', leadVol: 0.07, leadDur: 0.3,
+          arp: null, swing: 0,
+          kick: [1, 0, 1, 0, 1, 0, 1, 0], kickVol: 0.36, snare: [0, 0, 1, 0, 0, 0, 1, 0], snareVol: 0.16, hat: [0, 1, 0, 1, 0, 1, 0, 1], hatVol: 0.045,
+          pad: true, padVol: 0.03, padWave: 'triangle' },
+        // 8 · GLITCH CITY NIGHTS — glitchy and syncopated, irregular kick, stutter lead with rests, sparse sine blips, NO pad (dry)
+        { name: 'GLITCH STATIC', bpm: 140, root: 40, scale: SC_PHRYGIAN, chords: [0, 1, 0, 4],
+          bass: [1, 0, 1, 0, 0, 1, 1, 0], bassOctStep: 5, bassWave: 'square', bassVol: 0.11, bassDur: 0.11,
+          lead: [4, -1, 4, 4, -1, 2, -1, 7], leadWave: 'square', leadVol: 0.075, leadDur: 0.08,
+          arp: [7, -1, 2, -1, 7, -1, 4, -1], arpWave: 'sine', arpVol: 0.05, swing: 0,
+          kick: [1, 0, 0, 1, 0, 1, 0, 0], kickVol: 0.36, snare: [0, 0, 0, 1, 0, 0, 1, 0], snareVol: 0.17, hat: [1, 0, 1, 0, 0, 1, 0, 1], hatVol: 0.05,
+          pad: false, padVol: 0 },
+        // 9 · FIRE LAVA — fast and intense, A phrygian, relentless kick + bass, saw everywhere + 16th arp
+        { name: 'LAVA RUSH', bpm: 168, root: 33, scale: SC_PHRYGIAN, chords: [0, 1, 0, 6],
+          bass: [1, 1, 1, 1, 1, 1, 1, 1], bassOctStep: 4, bassWave: 'sawtooth', bassVol: 0.11, bassDur: 0.12,
+          lead: [4, 3, 1, 3, 4, 6, 4, 3], leadWave: 'sawtooth', leadVol: 0.075, leadDur: 0.12,
+          arp: [6, 4, 6, 3, 6, 4, 3, 6], arpWave: 'square', arpVol: 0.04, swing: 0,
+          kick: [1, 0, 1, 0, 1, 0, 1, 0], kickVol: 0.38, snare: [0, 0, 1, 0, 0, 0, 1, 0], snareVol: 0.17, hat: [1, 1, 1, 1, 1, 1, 1, 1], hatVol: 0.055,
+          pad: true, padVol: 0.03, padWave: 'triangle' },
+        // 10 · OCEAN ICE — slow and calm, F major, sparse and minimal: one kick a bar, no snare, long sine pad + singing sine lead
+        { name: 'FROZEN DRIFT', bpm: 88, root: 29, scale: SC_MAJOR, chords: [0, 4, 2, 5],
+          bass: [1, 0, 0, 0, 0, 0, 0, 0], bassOctStep: -1, bassWave: 'sine', bassVol: 0.11, bassDur: 0.6,
+          lead: [4, -1, 2, -1, 0, -1, -1, -1], leadWave: 'sine', leadVol: 0.08, leadDur: 0.7,
+          arp: null, swing: 0,
+          kick: [1, 0, 0, 0, 0, 0, 0, 0], kickVol: 0.3, snare: [0, 0, 0, 0, 0, 0, 0, 0], snareVol: 0, hat: [0, 0, 1, 0, 0, 0, 0, 0], hatVol: 0.035,
+          pad: true, padVol: 0.06, padWave: 'sine' },
+        // 11 · EMERALD GOLD — rich and smooth, Bb major, half-time kick, flowing triangle lead, warm pad, gentle swing
+        { name: 'GOLDEN HOUR', bpm: 112, root: 34, scale: SC_MAJOR, chords: [0, 5, 3, 4],
+          bass: [1, 0, 0, 1, 0, 0, 1, 0], bassOctStep: -1, bassWave: 'triangle', bassVol: 0.11, bassDur: 0.3,
+          lead: [2, 4, 4, 2, 5, 4, 2, 0], leadWave: 'triangle', leadVol: 0.075, leadDur: 0.3,
+          arp: null, swing: 0.08,
+          kick: [1, 0, 0, 0, 1, 0, 0, 0], kickVol: 0.32, snare: [0, 0, 0, 0, 1, 0, 0, 0], snareVol: 0.14, hat: [0, 1, 0, 1, 0, 1, 0, 1], hatVol: 0.045,
+          pad: true, padVol: 0.05, padWave: 'triangle' },
+        // 12 · RETRO EARTHY — warm and mellow, G major pentatonic, soft half-time feel, plucky triangle lead, swung
+        { name: 'COUNTRY ROAD', bpm: 96, root: 43, scale: SC_MAJPENT, chords: [0, 3, 4, 1],
+          bass: [1, 0, 0, 0, 1, 0, 0, 0], bassOctStep: -1, bassWave: 'triangle', bassVol: 0.10, bassDur: 0.3,
+          lead: [2, 1, 0, 1, 2, -1, 1, 0], leadWave: 'triangle', leadVol: 0.07, leadDur: 0.18,
+          arp: null, swing: 0.12,
+          kick: [1, 0, 0, 0, 0, 0, 0, 0], kickVol: 0.3, snare: [0, 0, 0, 0, 1, 0, 0, 0], snareVol: 0.13, hat: [0, 0, 1, 0, 0, 0, 1, 0], hatVol: 0.04,
+          pad: true, padVol: 0.045, padWave: 'triangle' }
       ];
-      var ARP_SEQ = [0, 1, 2, 3, 3, 2, 1, 2];
-      function startMusic() {
-        if (musicTimer || muted) return;
-        audio();
-        var stepMs = 60000 / MUSIC_BPM / 2;   // eighth notes
-        musicTimer = setInterval(function () {
-          if (muted) return;
-          var s = musicStep % 32;             // 4 bars × 8 eighths
-          var bar = Math.floor(s / 8), st = s % 8;
-          var ch = CHORDS[bar];
-          if (st % 2 === 0) tone(130, 0.13, 'sine', 0.15, 42);          // kick
-          if (st % 2 === 1) noiseBurst(0.03, 0.026);                    // hat
-          if (st === 2 || st === 6) noiseBurst(0.09, 0.05);             // snare
-          tone(st === 4 ? ch.root * 2 : ch.root, 0.19, 'square', 0.042); // driving bass
-          tone(ch.arp[ARP_SEQ[st]], 0.16, 'square', 0.026);              // arp lead
-          if (st === 0) {                                                // pad swell
-            tone(ch.arp[0] / 2, 0.85, 'triangle', 0.018);
-            tone(ch.arp[2] / 2, 0.85, 'triangle', 0.014);
-          }
-          musicStep++;
-        }, stepMs);
+      var musicBus = null;          // the one gain node every music note runs through
+      var currentTrackIdx = -1;     // MUSIC_TRACKS index playing now (or last set while muted)
+      var musicGen = 0;             // switch generation — a stale fade restart checks it and bails
+      function midiFreq(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+      /* Semitone offset of a scale degree. Degrees past the
+         end of the scale wrap into the next octave, so a lead
+         offset of 9 in a 7-note scale means "the 3rd degree,
+         an octave up". */
+      function scaleNote(tr, degree) {
+        var len = tr.scale.length;
+        var oct = Math.floor(degree / len);
+        return oct * 12 + tr.scale[degree - oct * len];
       }
-      function stopMusic() { if (musicTimer) { clearInterval(musicTimer); musicTimer = null; } }
+      function trackFreq(tr, degree, octaves) {
+        return midiFreq(tr.root + (octaves || 0) * 12 + scaleNote(tr, degree));
+      }
+      /* The track for a theme index. The built-in themes map
+         1:1; server custom themes past the twelve wrap around
+         deterministically (theme 13 plays track 1, and so on). */
+      function trackIdxForTheme(themeIdx) {
+        var n = MUSIC_TRACKS.length;
+        return ((themeIdx % n) + n) % n;
+      }
+      function trackForTheme(themeIdx) { return MUSIC_TRACKS[trackIdxForTheme(themeIdx)]; }
+      function trackLog(themeIdx) {
+        var tr = trackForTheme(themeIdx);
+        var th = THEMES[themeIdx] || THEMES[trackIdxForTheme(themeIdx)];
+        console.log('[Neon Wave] Music: ' + tr.name + ' — ' + tr.bpm + ' BPM (theme ' + (themeIdx + 1) + ' · ' + (th ? th.name : '') + ')');
+      }
+      function musicToast(themeIdx) {
+        var tr = trackForTheme(themeIdx);
+        toast('♪ ' + tr.name + ' · ' + tr.bpm + ' BPM', 1500);
+      }
+      function getMusicBus() {
+        var ac = audio(); if (!ac) return null;
+        if (!musicBus) {
+          musicBus = ac.createGain();
+          musicBus.gain.value = 1;
+          /* A gentle compressor glues the louder mix and
+             stops the summed peaks clipping at the speakers:
+             loud and punchy, never distorted. Fades still
+             work — they ride the bus gain ahead of it. */
+          var comp = ac.createDynamicsCompressor();
+          comp.threshold.value = -14;
+          comp.knee.value = 20;
+          comp.ratio.value = 5;
+          comp.attack.value = 0.004;
+          comp.release.value = 0.18;
+          musicBus.connect(comp); comp.connect(ac.destination);
+        }
+        return musicBus;
+      }
+      /* tone() / noiseBurst() twins that play through the
+         music bus instead of straight to the destination —
+         music only; every SFX call keeps using the originals. */
+      function mTone(freq, dur, type, vol, slideTo, delay) {
+        if (muted) return;
+        var ac = audio(); var bus = getMusicBus(); if (!ac || !bus) return;
+        var t = ac.currentTime + (delay || 0);
+        var o = ac.createOscillator(), g = ac.createGain();
+        o.type = type || 'square';
+        o.frequency.setValueAtTime(freq, t);
+        if (slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(20, slideTo), t + dur);
+        g.gain.setValueAtTime(vol || 0.08, t);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(g); g.connect(bus);
+        o.start(t); o.stop(t + dur + 0.02);
+      }
+      /* Noise buffers, cached: the old code built a fresh
+         AudioBuffer (and filled it with Math.random) on
+         EVERY hat and snare hit — pure allocation churn on
+         the main thread, several times a second. A few
+         pre-built buffers per length, rotated round-robin,
+         sound the same and cost nothing per hit. */
+      var noiseBufs = {}, noiseBufIdx = {};
+      function noiseBuf(dur) {
+        var ac = audio(); if (!ac) return null;
+        var key = Math.round(dur * 1000);
+        var list = noiseBufs[key];
+        if (!list) {
+          list = [];
+          for (var v = 0; v < 4; v++) {
+            var len = Math.max(1, Math.floor(ac.sampleRate * dur));
+            var buf = ac.createBuffer(1, len, ac.sampleRate);
+            var d = buf.getChannelData(0);
+            for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+            list.push(buf);
+          }
+          noiseBufs[key] = list; noiseBufIdx[key] = 0;
+        }
+        var b = list[noiseBufIdx[key] % 4]; noiseBufIdx[key]++;
+        return b;
+      }
+      function mNoise(dur, vol, freq, type, delay) {
+        if (muted) return;
+        var ac = audio(); var bus = getMusicBus(); if (!ac || !bus) return;
+        var buf = noiseBuf(dur); if (!buf) return;
+        var src = ac.createBufferSource(); src.buffer = buf;
+        var g = ac.createGain(); g.gain.value = vol || 0.16;
+        var f = ac.createBiquadFilter(); f.type = type || 'lowpass'; f.frequency.value = freq || 1600;
+        src.connect(f); f.connect(g); g.connect(bus);
+        src.start(ac.currentTime + (delay || 0));
+      }
+      function scheduleMusicStep(tr) {
+        if (muted) return;
+        var s = musicStep % 32;             // 4 bars × 8 eighths
+        var bar = Math.floor(s / 8), st = s % 8;
+        var chordDeg = tr.chords[bar];
+        var stepDur = 60 / tr.bpm / 2;      // one eighth note, seconds
+        /* Swung tracks land their off-8th notes late — the
+           groove, not just the tempo, differs per track. */
+        var swing = (st % 2 === 1) ? (tr.swing || 0) * stepDur : 0;
+        if (tr.kick[st]) mTone(150, 0.16, 'sine', tr.kickVol || 0.34, 40, swing);   // kick: pitch-drop punch
+        if (tr.snare[st]) mNoise(0.09, tr.snareVol || 0.16, 1800, 'lowpass', swing); // snare
+        if (tr.hat[st]) mNoise(0.03, tr.hatVol || 0.05, 7000, 'highpass', swing);    // hat
+        if (tr.bass[st]) {
+          var bDeg = chordDeg + (st === tr.bassOctStep ? tr.scale.length : 0);
+          mTone(trackFreq(tr, bDeg, 0), tr.bassDur || 0.19, tr.bassWave, tr.bassVol, 0, swing);  // bass
+        }
+        var leadOff = tr.lead[st];
+        if (leadOff >= 0) mTone(trackFreq(tr, chordDeg + leadOff, 2), tr.leadDur || 0.16, tr.leadWave, tr.leadVol, 0, swing);  // lead
+        if (tr.arp) {   // arpeggio: short notes on the off-16th, between the eighth steps
+          var arpOff = tr.arp[st];
+          if (arpOff >= 0) mTone(trackFreq(tr, chordDeg + arpOff, 2), 0.07, tr.arpWave || 'square', tr.arpVol || 0.04, 0, swing + stepDur / 2);
+        }
+        if (st === 0 && tr.pad) {                                          // pad swell
+          var barDur = (60 / tr.bpm) * 4;
+          var pw = tr.padWave || 'triangle';
+          mTone(trackFreq(tr, chordDeg, 1), barDur, pw, tr.padVol, 0, 0);
+          mTone(trackFreq(tr, chordDeg + 2, 1), barDur, pw, tr.padVol * 0.8, 0, 0);
+          mTone(trackFreq(tr, chordDeg + 4, 1), barDur, pw, tr.padVol * 0.8, 0, 0);
+        }
+        musicStep++;
+      }
+      function stopMusicLoop() { if (musicTimer) { clearInterval(musicTimer); musicTimer = null; } }
+      function runMusicLoop(idx) {
+        stopMusicLoop();
+        var tr = MUSIC_TRACKS[idx];
+        musicStep = 0;
+        var stepMs = 60000 / tr.bpm / 2;   // eighth notes
+        musicTimer = setInterval(function () { scheduleMusicStep(tr); }, stepMs);
+      }
+      /* Switch the music to a theme's track. The bus fades
+         out (~0.12 s), the old loop stops, the new track
+         restarts at its own tempo and fades back in
+         (~0.18 s) — tracks never overlap and never hard-cut.
+         Restarting the track that is already playing is a
+         no-op, so back-to-back calls stay seamless. While
+         muted, a switch only records the track (and logs
+         it): unmuting resumes whatever track is current. */
+      function setMusicTrack(themeIdx, opts) {
+        opts = opts || {};
+        var idx = trackIdxForTheme(themeIdx);
+        if (idx === currentTrackIdx && musicTimer && !muted) {
+          if (opts.toast) musicToast(themeIdx);
+          return;   // same track already playing — seamless
+        }
+        currentTrackIdx = idx;
+        trackLog(themeIdx);
+        if (opts.toast) musicToast(themeIdx);
+        var gen = ++musicGen;
+        if (muted) { stopMusicLoop(); return; }
+        var ac = audio(); if (!ac) return;
+        var bus = getMusicBus(); if (!bus) return;
+        if (!musicTimer) {
+          // Nothing playing yet (first interaction, or the
+          // loop was stopped): start the new track straight
+          // away, fading in.
+          bus.gain.cancelScheduledValues(ac.currentTime);
+          bus.gain.setValueAtTime(0, ac.currentTime);
+          bus.gain.linearRampToValueAtTime(1, ac.currentTime + 0.18);
+          runMusicLoop(idx);
+          return;
+        }
+        var t = ac.currentTime;
+        bus.gain.cancelScheduledValues(t);
+        bus.gain.setValueAtTime(bus.gain.value, t);
+        bus.gain.linearRampToValueAtTime(0, t + 0.12);
+        setTimeout(function () {
+          if (gen !== musicGen || muted) return;   // a newer switch or a mute landed first
+          runMusicLoop(idx);
+          bus.gain.cancelScheduledValues(ac.currentTime);
+          bus.gain.setValueAtTime(0, ac.currentTime);
+          bus.gain.linearRampToValueAtTime(1, ac.currentTime + 0.18);
+        }, 140);
+      }
+      /* Keep the music matched to whatever theme is on
+         screen right now — in the menu that is the equipped
+         theme, or Theme 1 when Auto / nothing is pinned. */
+      function syncMusicToTheme() { setMusicTrack(activeThemeIdx(), { toast: false }); }
+      /* (Re)start the current track after a mute, or set the
+         first track before any switch — used by the sound
+         toggle and by the first-interaction bootstrap. */
+      function resumeMusic() {
+        if (muted) return;
+        if (currentTrackIdx < 0) { syncMusicToTheme(); return; }
+        if (musicTimer) return;
+        musicGen++;
+        var ac = audio(); if (!ac) return;
+        var bus = getMusicBus(); if (!bus) return;
+        bus.gain.cancelScheduledValues(ac.currentTime);
+        bus.gain.setValueAtTime(0, ac.currentTime);
+        bus.gain.linearRampToValueAtTime(1, ac.currentTime + 0.18);
+        runMusicLoop(currentTrackIdx);
+      }
+      /* Muting silences the music at once (SFX check the
+         same flag) and cancels any fade restart still
+         pending, so nothing restarts behind the mute. */
+      function muteMusic() {
+        musicGen++;
+        stopMusicLoop();
+        if (!AC || !musicBus) return;
+        musicBus.gain.cancelScheduledValues(AC.currentTime);
+        musicBus.gain.setValueAtTime(1, AC.currentTime);   // ready for the next fade-in
+      }
 
       /* ---------------- Color themes ----------------
          The twelve combo themes, each taken same-to-same from
@@ -1293,6 +1949,11 @@
         { name: 'EMERALD GOLD', tun: '#0b7a41', bg0: '#06301c', bg1: '#01130b', glow: '#00e676', edge: '#00e676', spike: '#ffc400', spike2: '#ffe082', saw: '#69f0ae', arrow: '#ffc400', trail: '#ffc400', block: '#04170d', pat: 'diamonds', patA: '#00e676', patB: '#0d5c33', patC: '#ffc400', accent: '#00e676' },
         { name: 'RETRO EARTHY', tun: '#6f6a3d', bg0: '#45423d', bg1: '#3a3a3a', glow: '#8fae8b', edge: '#c0392b', spike: '#8fae8b', spike2: '#b7ccb0', saw: '#e8dcc4', arrow: '#e8dcc4', trail: '#e8dcc4', block: '#2f2c28', pat: 'checker', patA: '#c0392b', patB: '#8fae8b', patC: null, patWall: 'panels', accent: '#e8dcc4' }
       ];
+      /* How many themes are BUILT IN (the twelve). Server custom
+         themes are appended to THEMES later (see applyServerItems),
+         but the Endless zone cycle and the death-restart random
+         pick always rotate through the built-in twelve only. */
+      var BUILTIN_THEME_COUNT = THEMES.length;
       function hexRgb(hex) {
         var n = parseInt(hex.slice(1), 16);
         return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
@@ -1334,13 +1995,39 @@
         th._lat = ctx.createPattern(c, 'repeat');
         return th._lat;
       }
-      /* Spike fill, as in the original: near-black at the base,
-         fading into the level colour at the tip. */
-      function spikeGrad(th, x0, y0, x1, y1) {
-        var g = ctx.createLinearGradient(x0, y0, x1, y1);
-        g.addColorStop(0, '#060607');
-        g.addColorStop(0.55, shade(th.tun, 0.38));
-        g.addColorStop(1, shade(th.tun, 1.45));
+      /* Spike / triangle fills, cached per theme: a gradient
+         object is created once per (theme, shape) and reused
+         every frame. Coordinates are LOCAL — the caller
+         translates to the shape first — so one cached
+         gradient paints every spike of that height in the
+         theme, instead of a fresh gradient per spike per
+         frame (the old code made up to ~35 a frame in the
+         dense zig-zag sections, mid-level). The stops match
+         the old per-spike gradient exactly: dark at the
+         base, full spike colour at the tip. */
+      function spikeFill(th, dir, h) {
+        if (!th._sg) th._sg = {};
+        var key = dir + ':' + h;
+        var g = th._sg[key];
+        if (!g) {
+          var tip = dir === 'up' ? -h : h;
+          g = ctx.createLinearGradient(0, 0, 0, tip);
+          g.addColorStop(0, shade(th.spike, 0.45));
+          g.addColorStop(1, th.spike);
+          th._sg[key] = g;
+        }
+        return g;
+      }
+      function triFill(th, tx, ty) {
+        if (!th._tg) th._tg = {};
+        var key = Math.round(tx / 4) + ':' + Math.round(ty / 4);
+        var g = th._tg[key];
+        if (!g) {
+          g = ctx.createLinearGradient(0, 0, tx, ty);
+          g.addColorStop(0, shade(th.spike, 0.45));
+          g.addColorStop(1, th.spike);
+          th._tg[key] = g;
+        }
         return g;
       }
       /* Paint the DOM (menu, shop, HUD) in a theme: the CSS
@@ -1566,7 +2253,12 @@
         return d;
       }
       var ARROWS = [
-        { name: 'Volt Bolt',    price: 0,    mode: 'fill',   d: 'M17,-3 L4,-3 L10,-15 L-7,4 L-1,4 L-9,15 L12,-4 L5,-4 Z' },
+        /* The DEFAULT arrow: a clean solid triangle, the wave
+           arrow of the reference screens. It is index 0, so a
+           fresh player (and the shop's first free slot) always
+           starts with it; the original Volt Bolt design moved
+           to the end of this list and stays selectable. */
+        { name: 'Wave Triangle', price: 0,   mode: 'fill',   d: 'M17,0 L-12,-13.5 L-6,0 L-12,13.5 Z' },
         { name: 'Crescent Moon', price: 0,   mode: 'evenodd', d: 'M15,-13 A18,18 0 1,0 15,13 A13.5,13.5 0 1,1 15,-13 Z' },
         { name: 'Surge',        price: 0,    mode: 'stroke', lw: 4.2, d: 'M-16,-10 L-7,0 L-16,10 M-4,-10 L5,0 L-4,10 M8,-10 L17,0 L8,10' },
         { name: 'Ember Flame',  price: 1500, mode: 'fill',   d: 'M17,1 C12,-1 10,-6 6,-11 C5,-7 3,-5 0,-4 C-2,-9 -6,-13 -11,-14 C-10,-9 -13,-5 -13,0 C-13,8 -7,14 0,14 C8,14 15,7 17,1 Z' },
@@ -1580,7 +2272,8 @@
         { name: 'Pulse Heart',  price: 5000, mode: 'fill',   d: 'M0,14.5 C-2,8.5 -15,2.5 -15,-5.5 C-15,-11.5 -10.5,-15 -5.5,-15 C-2,-15 0,-12.5 0,-9.5 C0,-12.5 2,-15 5.5,-15 C10.5,-15 15,-11.5 15,-5.5 C15,2.5 2,8.5 0,14.5 Z' },
         { name: 'Echo Bowtie',  price: 7000, mode: 'fill',   d: 'M14,-11 L14,11 L1.5,0 Z M-14,-11 L-14,11 L-1.5,0 Z M-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0' },
         { name: 'Tri-Halo',     price: 7000, mode: 'evenodd', d: 'M17,0 L-13,-13.5 L-13,13.5 Z M-7.5,0 a5.5,5.5 0 1,0 11,0 a5.5,5.5 0 1,0 -11,0' },
-        { name: 'Vortex',       price: 8000, mode: 'stroke', lw: 3, d: spiralPath() }
+        { name: 'Vortex',       price: 8000, mode: 'stroke', lw: 3, d: spiralPath() },
+        { name: 'Volt Bolt',    price: 1500, mode: 'fill',   d: 'M17,-3 L4,-3 L10,-15 L-7,4 L-1,4 L-9,15 L12,-4 L5,-4 Z' }
       ];
       var TRAILS = [
         { id: 'ribbon',    name: 'Wavy Ribbon',    price: 0 },
@@ -1618,14 +2311,30 @@
         { id: 'stars',  name: 'Starfield',   price: 8000, type: 'pat',   hex: '#0a1440', pat: 'stars',  fg: '#ffe93c' },
         { id: 'aurora', name: 'Aurora Veil', price: 8000, type: 'grad',  hex: '#2ee6a8', stops: ['#2ee6a8', '#2fb9ff', '#b45cff'] }
       ];
-      /* Background themes, sold in the shop like everything else.
-         "Auto" keeps the original behavior — each level and each
-         endless zone has its own color. Equipping a specific theme
-         paints the menu, the shop and the whole game in that theme.
-         The first three themes are free, like every other tab. */
+      /* Background themes — the Themes tab sells the twelve
+         themes as twelve theme PACKS, styled like the level
+         cards. "Auto" keeps the original behavior — each level
+         and each endless zone has its own color. Equipping a
+         specific theme paints the menu, the shop and the whole
+         game in that theme.
+         Theme 1 (NEON BOSS BATTLE) is FREE. The other eleven
+         are LOCKED: pay the rising gem price once and the theme
+         is yours FOREVER (saved with the shop state), or watch
+         an ad for a free TRIAL that lasts only until you die.
+         These are built-in default prices — the server catalog
+         may override them, like every other shop item. */
       var THEME_ITEMS = [{ name: 'Auto', price: 0, th: -1 }];
-      var THEME_PRICES = [0, 0, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 3000];
+      var THEME_PRICES = [0, 150, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800];
       THEMES.forEach(function (t, i) { THEME_ITEMS.push({ name: t.name, price: THEME_PRICES[i], th: i }); });
+      /* THEMES index currently on a free ad trial, or -1. Session
+         only — never saved: it is cleared the moment a run ends
+         in death, and a fresh page load starts with no trial. */
+      var trialTheme = -1;
+      /* The same ad-trial system for the item tabs: the item
+         index currently on a free ad trial in each of Arrows /
+         Trails / Colours, or -1. Session only, like trialTheme:
+         cleared on death, never saved, never costs gems. */
+      var trialItems = { arrows: -1, trails: -1, colors: -1 };
 
       var SHOP_KEY = 'neonwave.shop.v1';
       var gems = 26;
@@ -1633,13 +2342,18 @@
         arrows: { 0: true, 1: true, 2: true },
         trails: { 0: true, 1: true, 2: true },
         colors: { 0: true, 1: true, 2: true },
-        themes: { 0: true, 1: true, 2: true }
+        themes: { 0: true, 1: true }   // Auto + Theme 1 free; themes 2–12 start locked
       };
       var eq = { arrows: 0, trails: 0, colors: 0, themes: 0 };
+      /* Server custom items the player owns, remembered by the
+         item's server id (cid): custom items are appended to the
+         shop lists when the /items answer arrives, so their list
+         index can differ between sessions — the cid cannot. */
+      var ownedCustomCids = {};
       var lastFreeGems = 0;
       function saveShop() {
         try {
-          localStorage.setItem(SHOP_KEY, JSON.stringify({ g: gems, own: owned, eq: eq, free: lastFreeGems }));
+          localStorage.setItem(SHOP_KEY, JSON.stringify({ g: gems, own: owned, eq: eq, free: lastFreeGems, cown: ownedCustomCids }));
         } catch (e) { /* storage unavailable — play on with session state */ }
       }
       function loadShop() {
@@ -1653,17 +2367,33 @@
               if (s.own[t]) owned[t] = s.own[t];
             });
           }
-          // The first three items of every tab are always free,
-          // including for players with an older save.
-          ['arrows', 'trails', 'colors', 'themes'].forEach(function (t) {
+          // The first three items of the arrows / trails / colors
+          // tabs are always free, including for players with an
+          // older save. Themes are different: only Auto and
+          // Theme 1 are free — themes 2–12 stay locked until the
+          // player unlocks them with gems, a gift code, or an ad
+          // trial. (A theme an older save already owns stays
+          // owned: the saved ownership above is kept as-is.)
+          ['arrows', 'trails', 'colors'].forEach(function (t) {
             owned[t][0] = true; owned[t][1] = true; owned[t][2] = true;
           });
+          owned.themes[0] = true; owned.themes[1] = true;
           if (s.eq) {
             ['arrows', 'trails', 'colors', 'themes'].forEach(function (t) {
               if (CATALOGS[t][s.eq[t]]) eq[t] = s.eq[t];
             });
           }
+          /* Ad trials are session-only and never saved: if a
+             save names an equipped arrow / trail / colour the
+             player does not own (it was on trial when the page
+             closed), fall back to that tab's free first item.
+             Themes need no such guard — fixedTheme() already
+             refuses to pin an unowned theme. */
+          ['arrows', 'trails', 'colors'].forEach(function (t) {
+            if (!owned[t][eq[t]]) eq[t] = 0;
+          });
           if (typeof s.free === 'number') lastFreeGems = s.free;
+          if (s.cown && typeof s.cown === 'object') ownedCustomCids = s.cown;
         } catch (e) { /* corrupted save — fall back to defaults */ }
       }
       loadShop();
@@ -1729,13 +2459,53 @@
         _patCache[c.id] = p;
         return p;
       }
+      /* The uploaded image of a custom (server) item, loaded
+         lazily and cached on the item itself. Returns null until
+         the image has actually loaded, so callers can fall back
+         for a frame instead of drawing a broken sprite. */
+      function customImg(it) {
+        if (!it || !it.img) return null;
+        if (!it._imgObj) {
+          var im = new Image();
+          im.src = it.img;
+          it._imgObj = im;
+        }
+        return (it._imgObj.complete && it._imgObj.naturalWidth > 0) ? it._imgObj : null;
+      }
+      /* A small repeating canvas pattern painted from a custom
+         colour item's uploaded image — while that colour is
+         equipped, the image becomes the arrow's colour/fill. */
+      function customPattern(c) {
+        if (c._pat) return c._pat;
+        var img = customImg(c);
+        if (!img) return null;
+        var cv = document.createElement('canvas');
+        cv.width = 48; cv.height = 48;
+        var g = cv.getContext('2d');
+        var sc = Math.max(48 / img.naturalWidth, 48 / img.naturalHeight);
+        var w = img.naturalWidth * sc, h = img.naturalHeight * sc;
+        g.drawImage(img, (48 - w) / 2, (48 - h) / 2, w, h);
+        c._pat = ctx.createPattern(cv, 'repeat');
+        return c._pat;
+      }
       function playerFill() {
         var c = COLORS[eq.colors];
+        /* A custom colour item paints the arrow with its
+           uploaded image (as a repeating pattern); until the
+           image loads, plain white stands in. */
+        if (c.custom) return customPattern(c) || '#ffffff';
         if (c.type === 'solid') return c.hex;
         if (c.type === 'pat') return colorPattern(c);
-        var g = ctx.createLinearGradient(-18, 0, 18, 0);
-        for (var i = 0; i < c.stops.length; i++) g.addColorStop(i / (c.stops.length - 1), c.stops[i]);
-        return g;
+        /* The gradient object is created once per color item and
+           reused every frame: gradient coordinates live in the
+           user space in effect when the shape is filled, so the
+           cached gradient paints identically to a fresh one. */
+        if (!c._grad) {
+          var g = ctx.createLinearGradient(-18, 0, 18, 0);
+          for (var i = 0; i < c.stops.length; i++) g.addColorStop(i / (c.stops.length - 1), c.stops[i]);
+          c._grad = g;
+        }
+        return c._grad;
       }
 
       /* ---------------- Obstacle builder ----------------
@@ -2019,11 +2789,50 @@
         return B;
       }
 
+      /* Gap fillers: short MIXED combos (always at least two of
+         the three obstacle kinds — wall spikes, spinning saws,
+         lattice blocks) dropped into any long empty stretch of
+         a Classic level: the run-in at the start, and the tail
+         before the finish portal. Together with the corridor
+         walls this guarantees the screen is never mostly empty
+         and no stretch shows a single obstacle kind for long.
+         Each combo is ≤ ~290 px wide and leaves clear space
+         around itself, so it is always passable. */
+      var FILLERS = [
+        function (F) { F.fs(3); F.gap(40); F.saw(26, 250); },
+        function (F) { F.cs(3); F.gap(36); F.floatSq(46, 300); },
+        function (F) { F.sawBlockF(150, 185, 26); F.gap(30); F.fs(2); },
+        function (F) { F.dia(112, 112, 270); F.gap(34); F.cs(2); },
+        function (F) { F.saw(26, 215); F.gap(38); F.teethF(1, 140); },
+        function (F) { F.fp(160, 170, true); F.gap(30); F.saw(24, 330); },
+        function (F) { F.csh(6); F.gap(30); F.floatSq(44, 220); },
+        function (F) { F.cp(160, 170, true); F.gap(32); F.saw(24, 205); }
+      ];
+      function fillGaps(obs, fromX, toX, seed) {
+        var sorted = obs.slice().sort(function (a, b) { return a.x - b.x; });
+        var cover = fromX, fi = seed;
+        function maybeFill(gapStart, gapEnd) {
+          if (gapEnd - gapStart > 430) {
+            var F = makeBuilder(obs, gapStart + 80, null);
+            FILLERS[fi % FILLERS.length](F);
+            fi++;
+          }
+        }
+        for (var i = 0; i < sorted.length; i++) {
+          var o = sorted[i];
+          if (o.x > cover) maybeFill(cover, Math.min(o.x, toX));
+          cover = Math.max(cover, o.x + (o.w || SPIKE));
+          if (cover >= toX) break;
+        }
+        if (cover < toX) maybeFill(cover, toX);
+      }
+
       function makeLevel(cfg) {
         var obs = [];
         var S = makeBuilder(obs, 950, null);
         cfg.build(S);
         var endX = S.cx;
+        fillGaps(obs, 330, endX + 250, cfg.name.length * 3 + cfg.title.length);
         return {
           name: cfg.name, title: cfg.title, diff: cfg.diff, speed: cfg.speed,
           obs: obs, length: endX + 550,
@@ -2186,6 +2995,34 @@
       var runThemeOverride = -1;     // death-restart theme: when >= 0, the current run is painted in this theme instead of its usual one
       var lastRunTheme = -1;         // THEMES index the most recent run was playing in
       var pendingDeathRestart = false; // set on death: the next new run must open in a different theme
+      /* Lives & revive: every run starts with 1 life — the FIRST
+         hit ends the run (GAME OVER, click to restart, never an
+         auto-restart). GAME OVER then offers up to 3 revives per
+         run (watch an ad); each revive continues the run from the
+         death spot with 1 life, and after the 3rd revive the next
+         death offers no revive. There is no post-hit
+         invincibility any more (no second life to protect) — the
+         brief invUntil grace remains only for the instant right
+         after a revive, so the obstacle that just killed the
+         arrow cannot kill the revived arrow in the same moment. */
+      var lives = 1;
+      /* Combo multiplier, as on the reference screens: every
+         8 seconds flown without a hit raises the combo one
+         step, up to ×5; any hit drops it back to ×1. Purely a
+         HUD score flourish — it never touches gems or lives. */
+      var combo = 1, cleanT = 0, comboShown = 0;
+      var comboBoxEl = document.getElementById('comboBox');
+      function updateComboUI() {
+        if (combo === comboShown) return;
+        comboShown = combo;
+        if (comboBoxEl) comboBoxEl.textContent = 'COMBO ×' + combo;
+      }
+      var invUntil = 0;              // nowS timestamp: invincible while nowS < invUntil
+      var REVIVES_PER_RUN = 3;       // revives allowed in one run
+      var revivesUsed = 0;           // revives already spent in this run
+      function revivesLeft() { return Math.max(0, REVIVES_PER_RUN - revivesUsed); }
+      var deathTrialUsed = false;    // the run that just ended was playing in the ad-trial theme
+      var deathTrialItemUsed = false; // the run that just ended had an ad-trial item equipped
 
       var hud = document.getElementById('hud');
       var pctEl = document.getElementById('pct');
@@ -2206,18 +3043,128 @@
         toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, ms || 1100);
       }
 
+      /* ---------------- Lives HUD ---------------- */
+      var livesBoxEl = document.getElementById('livesBox');
+      var trialBadgeEl = document.getElementById('trialBadge');
+      var HEART_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+      function updateLivesUI() {
+        var html = '';
+        for (var i = 0; i < 1; i++) html += '<span class="' + (i < lives ? '' : 'lost') + '">' + HEART_SVG + '</span>';
+        livesBoxEl.innerHTML = html;
+        livesBoxEl.setAttribute('aria-label', 'Lives left: ' + lives + ' of 1');
+      }
+      var trialBadgeShown = null;
+      function updateTrialBadge() {
+        var themeTrial = trialTheme >= 0 && activeThemeIdx() === trialTheme;
+        var itemTrial = (trialItems.arrows >= 0 && eq.arrows === trialItems.arrows) ||
+          (trialItems.trails >= 0 && eq.trails === trialItems.trails) ||
+          (trialItems.colors >= 0 && eq.colors === trialItems.colors);
+        var show = (state === 'playing' || state === 'dead' || state === 'paused') && (themeTrial || itemTrial);
+        if (show !== trialBadgeShown) {
+          trialBadgeShown = show;
+          trialBadgeEl.textContent = themeTrial ? 'TRIAL THEME' : 'TRIAL ITEM';
+          trialBadgeEl.classList.toggle('hidden', !show);
+        }
+      }
+
+      /* ---------------- Ads (10-second countdown) ----------------
+         ★ SERVER-DRIVEN AD CONFIG ★ — nothing about ads is set in
+         this file. On load the game fetches GET /ads from the gift
+         Worker (see applyServerAds() in the server-sync block);
+         the admin panel saves { adsEnabled, network, bannerCode,
+         nativeCode, socialBarCode, directLink } there. Until that
+         answer arrives — and whenever it fails, is missing, or
+         has adsEnabled off — AD_CONFIG stays in its default
+         "ads off" state: no ad code is injected anywhere and the
+         "watch ad" buttons (revive, theme / item trials) are not
+         shown. Gameplay never waits for or depends on this.
+
+         ★ WATCH-AD FLOW ★ — every "Watch Ad" tap (revive, theme
+         trial, item trial) comes through showAd(). It always runs
+         the 10-second countdown overlay (progress bar + "Cancel —
+         no reward") and reports cb(true) when the countdown
+         completes, cb(false) when the player cancels.
+         DIRECT LINK: when the server config's directLink is set,
+         showAd() also opens that link in a new tab. The
+         window.open call happens synchronously inside showAd(),
+         which every caller invokes directly from the player's tap
+         handler, so the browser treats it as user-gesture safe.
+         While the link is empty the overlay keeps its DEMO AD
+         label, no tab opens, and the reward still arrives after
+         the countdown. */
+      var AD_CONFIG = { enabled: false, network: '', directLink: '' };
+      function adsEnabled() { return AD_CONFIG.enabled === true; }
+      var adOverlayEl = document.getElementById('adOverlay');
+      var adCountEl = document.getElementById('adCount');
+      var adBarEl = document.getElementById('adBar');
+      var adPillEl = document.getElementById('adPill');
+      var adNoteEl = document.getElementById('adNote');
+      var adStageTitleEl = document.getElementById('adStageTitle');
+      var adStageSubEl = document.getElementById('adStageSub');
+      var adTimer = null;
+      var adCallback = null;
+      function finishAd(ok) {
+        if (adTimer) { clearInterval(adTimer); adTimer = null; }
+        adOverlayEl.classList.add('hidden');
+        var cb = adCallback;
+        adCallback = null;
+        if (cb) cb(ok);
+      }
+      function showAd(cb) {
+        if (adTimer) { if (cb) cb(false); return; }   // one ad at a time
+        adCallback = cb;
+        var directLink = (AD_CONFIG.directLink || '').trim();
+        var hasLink = directLink.length > 0;
+        if (hasLink) {
+          /* Open the ad's direct link in a new tab — called
+             directly from the player's tap (via this function),
+             before anything async, so popup blockers allow it. */
+          try { window.open(directLink, '_blank', 'noopener'); } catch (e) { /* countdown still runs */ }
+          adPillEl.textContent = 'AD';
+          adStageTitleEl.textContent = 'AD OPENED';
+          adStageSubEl.textContent = 'Your ad opened in a new tab';
+          adNoteEl.innerHTML = 'The ad opened in a <b>new tab</b>. Your reward arrives when this <b>10-second</b> countdown finishes.';
+        } else {
+          adPillEl.textContent = 'DEMO AD';
+          adStageTitleEl.textContent = 'YOUR AD HERE';
+          adStageSubEl.textContent = 'Neon Wave demo advertisement';
+          adNoteEl.innerHTML = 'This is a <b>simulated demo ad</b> — no real ad network is connected yet. Your reward arrives when the 10-second countdown finishes.';
+        }
+        var startedAt = Date.now();
+        var AD_MS = 10000;
+        adCountEl.textContent = '10';
+        adBarEl.style.width = '0%';
+        adOverlayEl.classList.remove('hidden');
+        adTimer = setInterval(function () {
+          var left = AD_MS - (Date.now() - startedAt);
+          if (left <= 0) { finishAd(true); return; }
+          adCountEl.textContent = String(Math.ceil(left / 1000));
+          adBarEl.style.width = Math.min(100, (1 - left / AD_MS) * 100) + '%';
+        }, 100);
+      }
+      document.getElementById('adCancel').addEventListener('click', function () { finishAd(false); });
+
       function zoneIdxAt(x) { return Math.floor(x / ZONE_LEN); }
       /* THEMES index of the theme equipped in the shop, or -1 when
-         "Auto" is equipped (themes follow levels / endless zones). */
-      function fixedTheme() { return eq.themes > 0 ? THEME_ITEMS[eq.themes].th : -1; }
+         "Auto" is equipped (themes follow levels / endless zones).
+         A theme the player neither owns nor currently trials does
+         NOT pin — this is what re-locks a trial theme after death
+         or after a page reload. */
+      function fixedTheme() {
+        if (eq.themes <= 0) return -1;
+        var th = THEME_ITEMS[eq.themes].th;
+        if (th < 0) return -1;
+        if (isOwned('themes', eq.themes) || trialTheme === th) return th;
+        return -1;
+      }
       /* A random theme index that is never the one passed in —
          used so a run started after a death always opens in a
          fresh background theme, different from the run that
          just ended. */
       function pickDifferentTheme(prev) {
-        if (THEMES.length < 2) return prev;
+        if (BUILTIN_THEME_COUNT < 2) return prev;
         var n = prev;
-        while (n === prev) n = Math.floor(Math.random() * THEMES.length);
+        while (n === prev) n = Math.floor(Math.random() * BUILTIN_THEME_COUNT);
         return n;
       }
       /* The theme an endless zone is painted in: zones cycle
@@ -2225,7 +3172,7 @@
          death-restart theme when there is one. */
       function endlessZoneTheme(zone) {
         var base = runThemeOverride >= 0 ? runThemeOverride : 0;
-        return ((base + zone) % THEMES.length + THEMES.length) % THEMES.length;
+        return ((base + zone) % BUILTIN_THEME_COUNT + BUILTIN_THEME_COUNT) % BUILTIN_THEME_COUNT;
       }
       function activeThemeIdx() {
         if (state === 'menu') {
@@ -2245,7 +3192,7 @@
         }
         var ft = fixedTheme();
         if (ft >= 0) return ft;
-        if (mode === 'endless') return ((zoneIdxAt(player.x) % THEMES.length) + THEMES.length) % THEMES.length;
+        if (mode === 'endless') return ((zoneIdxAt(player.x) % BUILTIN_THEME_COUNT) + BUILTIN_THEME_COUNT) % BUILTIN_THEME_COUNT;
         return levelIdx;
       }
       function themeOf(o) {
@@ -2295,9 +3242,26 @@
         lastCheckpoint = 0;
         lastZone = 1;
         lastMilestone = 0;
+        /* A fresh run always starts with 1 life and all 3
+           revives unused — theme changes mid-run (Endless) never
+           touch either; only startRun resets them. */
+        lives = 1;
+        invUntil = 0;
+        revivesUsed = 0;
+        deathTrialUsed = false;
+        deathTrialItemUsed = false;
+        combo = 1; cleanT = 0; updateComboUI();
+        /* Each run's corridor wanders differently: re-seed the
+           wall phases from the level / mode being started. */
+        var cSeed = (mode === 'classic' ? (levelIdx + 1) * 1.37 : 0.83);
+        corrPh = [cSeed, cSeed * 2.13 + 0.7, cSeed * 1.61 + 2.2, cSeed * 2.87 + 4.1];
+        updateLivesUI();
         if (mode === 'endless') endless = { obs: [], genX: 1000 };
         resetPlayer(0);
         state = 'playing';
+        /* Every run loads with the ads shown first — a bar
+           hidden in an earlier run never leaks into this one. */
+        resetAdBars();
         startTime = performance.now();
         menuEl.classList.add('hidden');
         overlayEl.classList.add('hidden');
@@ -2307,7 +3271,11 @@
           ? 'ENDLESS · ' + THEMES[activeThemeIdx()].name
           : L.name + ' · ' + L.title + (practice ? ' · PRACTICE' : '');
         updateHUD(0);
-        startMusic();
+        /* Every fresh start plays THIS run's theme's own
+           track — fresh starts, NEXT LEVEL, REPLAY and every
+           death restart (TRY AGAIN / ENDLESS AGAIN / pause
+           RESTART / R key / PLAY from the menu) alike. */
+        setMusicTrack(activeThemeIdx(), { toast: true });
       }
 
       function resetPlayer(fromX) {
@@ -2319,7 +3287,49 @@
         camX = Math.max(0, player.x - VW * 0.3);
       }
 
+      /* One obstacle hit. A run has exactly 1 life, so the FIRST
+         hit ends the run at once, in die() — die() supplies the
+         crash feedback (shake, shatter, sound). No life is left
+         to protect, so a hit grants no invincibility; the
+         invUntil guard above only covers the brief grace right
+         after a revive. Theme switches in Endless never call
+         this and never reset lives. */
+      function hitObstacle() {
+        if (state !== 'playing' || nowS < invUntil) return;
+        lives = 0;
+        combo = 1; cleanT = 0; updateComboUI();
+        updateLivesUI();
+        die();
+      }
+
       function die() {
+        /* Death ends any ad trial: the trial theme locks again
+           right now, even if the player goes on to revive —
+           revive restores the run, not the trial (a revived run
+           that was trialling continues in Theme 1, see
+           reviveRun). */
+        deathTrialUsed = trialTheme >= 0 && activeThemeIdx() === trialTheme;
+        if (trialTheme >= 0) {
+          var trialTh = trialTheme;
+          trialTheme = -1;
+          trialBadgeShown = null;
+          updateTrialBadge();
+          if (THEME_ITEMS[eq.themes] && THEME_ITEMS[eq.themes].th === trialTh) eq.themes = 1; // back to free Theme 1
+          saveShop();
+        }
+        /* Death also ends every ITEM trial (arrow / trail /
+           colour), exactly like the theme trial: a trial item
+           that was equipped falls back to the tab's free first
+           item, and the trial locks until another ad is
+           watched. Owned items are never touched. */
+        deathTrialItemUsed = false;
+        ['arrows', 'trails', 'colors'].forEach(function (tab) {
+          if (trialItems[tab] >= 0) {
+            if (eq[tab] === trialItems[tab]) { deathTrialItemUsed = true; eq[tab] = 0; }
+            trialItems[tab] = -1;
+          }
+        });
+        if (deathTrialItemUsed) { trialBadgeShown = null; updateTrialBadge(); saveShop(); }
         state = 'dead';
         // Remember this death: the next new run (TRY AGAIN,
         // RESTART, checkpoint resume, …) must open in a
@@ -2333,7 +3343,7 @@
         // On death the arrow shatters into small square
         // pink/white fragments, as in the original.
         var dpal = ['#ff2e88', '#ff5da2', '#ff8fc0', '#ffd7ea'];
-        for (var i = 0; i < 26; i++) {
+        for (var i = 0; i < (MOBILE_FX ? 14 : 26); i++) {
           var a = Math.random() * Math.PI * 2, sp = 90 + Math.random() * 330;
           var pick = Math.random();
           particles.push({
@@ -2355,6 +3365,73 @@
         showDeathScreen();
       }
 
+      /* The Revive offer shown on a death screen — offered
+         while this run still has revives left (3 per run), with
+         the remaining count shown plainly on the button. After
+         the 3rd revive is spent, no button appears at all.
+         When the run was playing in the ad-trial theme, the
+         button says plainly that the trial ended and the revive
+         continues in the free Theme 1. */
+      function reviveOfferHtml() {
+        if (revivesLeft() <= 0) {
+          return '<p class="statLine" style="font-size:14.5px;margin-top:14px">No revives left this run &mdash; all ' + REVIVES_PER_RUN + ' were used.</p>';
+        }
+        if (!adsEnabled()) {
+          /* Ads are off in the server ad config (or it has not
+             loaded): revives are a watch-ad reward, so no revive
+             button is offered. The run still ends normally —
+             restart and menu work as always. */
+          return '';
+        }
+        var label = deathTrialUsed
+          ? '&#8635; REVIVE &mdash; WATCH AD (continues in Theme 1) &middot; ' + revivesLeft() + ' LEFT'
+          : '&#8635; REVIVE &mdash; WATCH AD &middot; ' + revivesLeft() + ' LEFT';
+        var html = '<div class="modeRow" style="margin-top:14px"><button class="btn cyan" id="ovRevive">' + label + '</button></div>';
+        html += '<p class="statLine" style="font-size:14.5px">Revive brings you back with <b>1 life</b>, right where you fell. <b>' + revivesLeft() + ' of ' + REVIVES_PER_RUN + '</b> revives left this run.</p>';
+        if (deathTrialUsed) {
+          html += '<p class="statLine" style="font-size:14.5px">Your free-trial theme ended with that run &mdash; a revive continues in <b>Theme 1 &middot; NEON BOSS BATTLE</b>. Watch another ad or spend gems in the Shop to use the trial theme again.</p>';
+        }
+        if (deathTrialItemUsed) {
+          html += '<p class="statLine" style="font-size:14.5px">Your free-trial item also ended with that run &mdash; a revive continues with the free items equipped. Watch another ad or spend gems in the Shop to use the trial item again.</p>';
+        }
+        return html;
+      }
+      function wireReviveBtn() {
+        var b = document.getElementById('ovRevive');
+        if (!b) return;
+        b.onclick = function () {
+          showAd(function (ok) { if (ok) reviveRun(); });
+        };
+      }
+      /* Revive: continue THIS run from the death spot with
+         1 life and a brief grace blink (invUntil), so the same
+         obstacle cannot kill the revived arrow instantly. Not a new run —
+         lives/revive bookkeeping, distance, score and the
+         Endless theme cycle all carry on untouched, except that
+         a lost trial theme stays lost: the run continues in the
+         free Theme 1 visuals. */
+      function reviveRun() {
+        revivesUsed++;
+        lives = 1;
+        updateLivesUI();
+        player.y = VH / 2;
+        player.vy = 0;
+        trail = [];
+        invUntil = nowS + 2;
+        if (deathTrialUsed) { runThemeOverride = 0; lastRunTheme = 0; }
+        pendingDeathRestart = false;
+        overlayEl.classList.add('hidden');
+        hud.classList.remove('hidden');
+        holdHintEl.classList.remove('hidden');
+        state = 'playing';
+        startTime = performance.now() - runTime * 1000;
+        /* A revive continues this run, so the music follows
+           the theme the run continues in — Theme 1's track
+           when a lost trial drops the run back to Theme 1. */
+        setMusicTrack(activeThemeIdx(), { toast: false });
+        toast('REVIVED — 1 LIFE · ' + revivesLeft() + (revivesLeft() === 1 ? ' REVIVE' : ' REVIVES') + ' LEFT', 1300, '#7cfc9a');
+      }
+
       function showDeathScreen() {
         state = 'over';
         hud.classList.add('hidden');
@@ -2369,10 +3446,12 @@
           '<p class="statLine">' + L.name + ' &middot; ' + L.title + '</p>' +
           '<div class="bigScore">' + pct + '%</div>' +
           '<p class="statLine">Attempt: <b>' + (attempts + 1) + '</b></p>' +
-          '<p class="statLine">Tap TRY AGAIN when you are ready &mdash; the run will not restart by itself, and it opens in a fresh new theme.</p>' +
+          '<p class="statLine">Your one life is gone. Tap TRY AGAIN when you are ready &mdash; the run will not restart by itself, and it opens in a fresh new theme.</p>' +
+          reviveOfferHtml() +
           '<div class="modeRow" style="margin-top:16px">' + retryBtn +
           '<button class="btn ghost" id="ovMenu4">MENU</button></div>';
         overlayEl.classList.remove('hidden');
+        wireReviveBtn();
         document.getElementById('ovRetry').onclick = practice ? resumeFromCheckpoint : function () { startRun(levelIdx, 'classic'); };
         document.getElementById('ovMenu4').onclick = showMenu;
       }
@@ -2387,13 +3466,18 @@
         lastRunTheme = runThemeOverride;
         pendingDeathRestart = false;
         attempts++;
+        lives = 1;
+        invUntil = 0;
+        revivesUsed = 0;
+        deathTrialUsed = false;
+        updateLivesUI();
         resetPlayer(lastCheckpoint);
         overlayEl.classList.add('hidden');
         hud.classList.remove('hidden');
         holdHintEl.classList.remove('hidden');
         state = 'playing';
         startTime = performance.now() - runTime * 1000;
-        startMusic();
+        setMusicTrack(activeThemeIdx(), { toast: false });
         toast('BACK TO CHECKPOINT', 900, '#7cfc9a');
       }
 
@@ -2431,14 +3515,16 @@
           '<h2 class="screenTitle">GAME OVER</h2>' +
           '<p class="statLine">Endless score</p>' +
           '<div class="bigScore">' + score + ' m</div>' +
-          '<p class="statLine">Best this session: <b>' + bestEndless + ' m</b> · Zones cleared: <b>' + (lastZone - 1) + '</b></p>' +
+          '<p class="statLine">Best this session: <b>' + bestEndless + ' m</b> · Themes cleared: <b>' + (lastZone - 1) + '</b></p>' +
           '<p class="statLine">ENDLESS AGAIN opens in a fresh new theme.</p>' +
+          reviveOfferHtml() +
           '<div class="modeRow" style="margin-top:16px">' +
-          '<button class="btn cyan" id="ovAgain">ENDLESS AGAIN</button>' +
+          '<button class="btn" id="ovAgain">ENDLESS AGAIN</button>' +
           '<button class="btn ghost" id="ovMenu2">MENU</button></div>';
         overlayEl.classList.remove('hidden');
         hud.classList.add('hidden');
         holdHintEl.classList.add('hidden');
+        wireReviveBtn();
         document.getElementById('ovAgain').onclick = function () { startRun(0, 'endless'); };
         document.getElementById('ovMenu2').onclick = showMenu;
       }
@@ -2469,59 +3555,60 @@
         hud.classList.add('hidden');
         holdHintEl.classList.add('hidden');
         menuEl.classList.remove('hidden');
+        /* Back on the menu, the ads show first again too. */
+        resetAdBars();
         buildLevelGrid();
+        /* Menu music = the equipped theme's track, or
+           Theme 1's when Auto / nothing is pinned. */
+        syncMusicToTheme();
       }
 
       /* ---------------- Endless generation ----------------
-         Each color zone has its own obstacle family, so the deeper
-         you fly, the more the game changes: spikes, then teeth and
-         tunnels, then zigzag corridors, then saws and diamonds,
-         then big structures — while the color keeps changing too. */
+         MIXED generation: the old zone families made long
+         stretches of ONE obstacle kind (after ~100 m everything
+         looked the same). Now every generated section is a COMBO
+         that mixes at least two of the three kinds — wall
+         spikes, spinning saws, lattice blocks — and the combo
+         changes from section to section: the same combo never
+         runs twice in a row, and a shuffled deck deals all
+         twelve combos before any repeats. So at any distance —
+         50 m, 150 m, 600 m — the screen shows a changing mix,
+         never one type repeated. Difficulty still ramps with
+         distance (tighter gaps, oscillating saws). */
       function ir(n) { return Math.floor(Math.random() * n); }
+      var ENDLESS_COMBOS = [
+        function (S, d) { S.fs(4 + ir(2)); S.gap(42); S.saw(27, 245 + ir(50), 'dark', d > 0.3 ? 36 : 0, 2.2); S.gap(30); S.cs(2); },
+        function (S, d) { S.sawBlockF(165, 195, 28); S.gap(38); S.cs(3 + ir(2)); S.gap(26); S.saw(25, 330, 'dark', 0, 2.2); },
+        function (S, d) { S.teethB(3, 156 - d * 18); S.gap(34); S.saw(27, 270, 'dark', d > 0.2 ? 44 : 0, 2.1); },
+        function (S, d) { S.sawTunnel(520 + ir(140), 218 - d * 42); S.gap(30); S.fs(3); },
+        function (S, d) { S.dia(118, 122 + d * 26, 205 + ir(130)); S.gap(38); S.saw(26, 285 + ir(60), 'dark', 0, 2.3); S.gap(28); S.fs(2); },
+        function (S, d) { S.zigS(880 + ir(220), 246 - d * 52, 110, 2, 270); },
+        function (S, d) { S.fp(160 + ir(90), 182, true, Math.random() < 0.4 ? 'gear' : null); S.gap(36); S.saw(26, 320 + ir(40), 'dark', 0, 2.2); S.gap(24); S.csh(5); },
+        function (S, d) { S.cp(160 + ir(90), 182, true, Math.random() < 0.4 ? 'cross' : null); S.gap(36); S.floatSq(45, 215 + ir(110)); S.gap(30); S.fs(3); },
+        function (S, d) { S.stepsT(4, 124, 226 - d * 52, 55); S.gap(30); S.saw(26, 262 + ir(30), 'dark', d > 0.25 ? 40 : 0, 2.2); },
+        function (S, d) { S.bs(3 + ir(2)); S.gap(36); S.saw(28, 190 + ir(50), 'dark', 0, 2.2); S.gap(90); S.saw(28, 320 + ir(40), 'dark', 0, 2.2); },
+        function (S, d) { if (Math.random() < 0.5) S.pillarF(195 + ir(70)); else S.pillarC(195 + ir(70)); S.gap(38); S.fs(3); S.gap(26); S.saw(25, 250 + ir(50), 'dark', 0, 2.2); },
+        function (S, d) { S.gateCols(185, 355, 44); S.gap(120); S.sawBlockC(165, 195, 28); S.gap(34); S.fsh(6); }
+      ];
+      var endlessDeck = [], lastCombo = -1;
+      function nextComboIdx() {
+        if (!endlessDeck.length) {
+          endlessDeck = ENDLESS_COMBOS.map(function (_, i) { return i; });
+          for (var i = endlessDeck.length - 1; i > 0; i--) {
+            var j = ir(i + 1), t = endlessDeck[i]; endlessDeck[i] = endlessDeck[j]; endlessDeck[j] = t;
+          }
+          if (endlessDeck[0] === lastCombo) { var t2 = endlessDeck[0]; endlessDeck[0] = endlessDeck[1]; endlessDeck[1] = t2; }
+        }
+        lastCombo = endlessDeck.shift();
+        return lastCombo;
+      }
       function genEndless() {
         var gx = endless.genX;
         var zone = zoneIdxAt(gx);
-        var fam = ((zone % 5) + 5) % 5;
         var diff = Math.min(1, Math.max(0, player.x / 16000));
         var S = makeBuilder(endless.obs, gx, endlessZoneTheme(zone));
-        var r = Math.random();
-        if (fam === 0) {                                   // spike fields
-          if (r < 0.3) S.fs(4 + ir(3 + diff * 2));
-          else if (r < 0.55) S.cs(4 + ir(3 + diff * 2));
-          else if (r < 0.75) S.bs(4 + ir(2 + diff * 2));
-          else if (r < 0.88) S.fsh(6 + ir(4));
-          else S.csh(6 + ir(4));
-        } else if (fam === 1) {                            // teeth, stairs & tunnels
-          if (r < 0.3) S.teethC(4 + ir(3), 148 - diff * 25);
-          else if (r < 0.6) S.teethF(4 + ir(3), 148 - diff * 25);
-          else if (r < 0.72) S.teethB(3 + ir(2), 158 - diff * 20);
-          else if (r < 0.86) S.stepsT(4 + ir(2), 124, 226 - diff * 54, 55);
-          else if (r < 0.93) { if (Math.random() < 0.5) S.stripF(8 + ir(4)); else S.stripC(8 + ir(4)); }
-          else S.tunnel(480 + Math.random() * 220, 224 - diff * 56, 200 + Math.random() * 140);
-        } else if (fam === 2) {                            // zigzag corridors
-          if (r < 0.45) S.zig(880 + Math.random() * 330, 226 - diff * 60, 110, 2, 270);
-          else S.zigS(880 + Math.random() * 330, 244 - diff * 54, 110, 2, 270);
-        } else if (fam === 3) {                            // saws & diamonds
-          if (r < 0.3) S.saw(30 + ir(7), 170 + Math.random() * 200, 'dark', diff > 0.25 ? 40 + Math.random() * 55 : 0, 2.1);
-          else if (r < 0.45) { S.saw(30 + ir(6), 185 + Math.random() * 60, 'dark', 0, 2.2); S.gap(120); S.saw(30 + ir(6), 300 + Math.random() * 60, 'dark', 0, 2.2); }
-          else if (r < 0.62) S.dia(120, 120 + diff * 30, 200 + Math.random() * 140);
-          else if (r < 0.78) S.slab(90 + Math.random() * 300, 54, 300 + Math.random() * 120, Math.random() < 0.5, Math.random() < 0.5);
-          else if (r < 0.9) S.sawTunnel(520 + Math.random() * 160, 216 - diff * 40);
-          else if (r < 0.96) S.floatSq(44 + ir(10), 200 + Math.random() * 140);
-          else S.sawBlockF(170, 200, 30);
-        } else {                                           // structures
-          if (r < 0.22) S.fp(150 + Math.random() * 110, 180, Math.random() < 0.75, Math.random() < 0.4 ? 'gear' : null);
-          else if (r < 0.44) S.cp(150 + Math.random() * 110, 180, Math.random() < 0.75, Math.random() < 0.4 ? 'cross' : null);
-          else if (r < 0.58) S.rampF(90, 240 + Math.random() * 60, 320);
-          else if (r < 0.72) S.rampC(90, 240 + Math.random() * 60, 320);
-          else if (r < 0.79) S.pillarF(190 + Math.random() * 80);
-          else if (r < 0.86) S.pillarC(190 + Math.random() * 80);
-          else if (r < 0.905) S.forkF(200 + Math.random() * 70, 120);
-          else if (r < 0.95) S.forkC(200 + Math.random() * 70, 120);
-          else if (r < 0.975) S.gate(185, 185);
-          else S.gateCols(185, 355, 44);
-        }
-        endless.genX = S.cx + (248 - diff * 88) + Math.random() * 95;
+        ENDLESS_COMBOS[nextComboIdx()](S, diff);
+        endless.genX = S.cx + (196 - diff * 66) + Math.random() * 70;
         var obs = endless.obs;
         while (obs.length && obs[0].x + (obs[0].w || SPIKE) < player.x - 600) obs.shift();
       }
@@ -2542,6 +3629,13 @@
         player.x += speed * dt;
         player.y += player.vy * dt;
 
+        // combo: clean flying raises the multiplier a step
+        // every 8 seconds, up to ×5 (a hit resets it — see
+        // hitObstacle).
+        cleanT += dt;
+        var nc = Math.min(5, 1 + Math.floor(cleanT / 8));
+        if (nc !== combo) { combo = nc; updateComboUI(); }
+
         // trail
         trail.push({ x: player.x, y: player.y });
         while (trail.length && trail[0].x < player.x - 300) trail.shift();
@@ -2552,20 +3646,28 @@
         if (mode === 'endless') {
           speed = 315 + Math.min(150, player.x / 220);
           while (endless.genX < player.x + VW + 700) genEndless();
-          var z = zoneIdxAt(player.x) + 1;
-          if (z !== lastZone) {
-            lastZone = z;
-            var th = THEMES[activeThemeIdx()];
-            toast('ZONE ' + z + ' — ' + th.name, 1300);
-            tone(280, 0.3, 'sawtooth', 0.05, 920);
-            levelNameEl.textContent = 'ENDLESS · ' + th.name;
-          }
           var ms = Math.floor(player.x / 25000);   // one milestone per 500 m
           if (ms > lastMilestone) {
             lastMilestone = ms;
             addGems(GAME_SETTINGS.gemRewardEndlessPer500m);
             toast('+' + GAME_SETTINGS.gemRewardEndlessPer500m + ' GEMS — 500m MILESTONE', 1200, '#c99aff');
             tone(990, 0.09, 'square', 0.05);
+          }
+          var z = zoneIdxAt(player.x) + 1;
+          if (z !== lastZone) {
+            /* 200 m done: the NEXT theme in order takes over —
+               background, obstacles, arrow and trail all read
+               the new zone theme, so the whole set switches
+               together — and the music switches to the new
+               theme's own track with it. Lives and the run's
+               revive are NOT touched by a theme change. */
+            lastZone = z;
+            var th = THEMES[activeThemeIdx()];
+            var trk = trackForTheme(activeThemeIdx());
+            toast('THEME CHANGED! — ' + th.name + ' ♪ ' + trk.name + ' · ' + trk.bpm + ' BPM', 1500);
+            setMusicTrack(activeThemeIdx(), { toast: false });
+            tone(280, 0.3, 'sawtooth', 0.05, 920);
+            levelNameEl.textContent = 'ENDLESS · ' + th.name;
           }
         }
 
@@ -2581,33 +3683,51 @@
           }
         }
 
-        // bounds
-        if (player.y < 8 || player.y > VH - 8) { die(); return; }
+        // bounds — the arrow plays INSIDE the corridor and
+        // cannot leave it: touching a corridor wall is a hit
+        // like any other, and with 1 life per run it ends the
+        // run; only during the brief post-revive grace is the
+        // arrow simply held inside the corridor instead.
+        var cTop = corridorTop(player.x) + 12, cBot = corridorBot(player.x) - 12;
+        if (player.y < cTop || player.y > cBot) {
+          if (nowS < invUntil) {
+            player.y = Math.max(cTop, Math.min(cBot, player.y));
+          } else {
+            hitObstacle();
+            if (state !== 'playing') return;
+            player.y = Math.max(cTop + 34, Math.min(cBot - 34, player.y));
+          }
+        }
 
-        // collisions
-        var obs = currentObs();
-        var px = player.x, py = player.y;
-        for (var j = 0; j < obs.length; j++) {
-          var o = obs[j];
-          var ow = o.w || SPIKE;
-          if (o.x > px + 30 || o.x + ow < px - 30) continue;
-          if (o.k === 'rect') {
-            if (circleRect(px, py, 6.5, o.x + 3, o.y + 3, o.w - 6, o.h - 6) ||
-                circleRect(px + 11, py, 4, o.x + 2, o.y + 2, o.w - 4, o.h - 4)) { die(); return; }
-          } else if (o.k === 'spike') {
-            if (inSpike(px, py, o) || inSpike(px + 11, py, o)) { die(); return; }
-          } else if (o.k === 'tri') {
-            if (circlePoly(px, py, 5, o.pts) || circlePoly(px + 11, py, 3, o.pts)) { die(); return; }
-          } else if (o.k === 'poly') {
-            if (circlePoly(px, py, 6, o.pts) || circlePoly(px + 11, py, 3.5, o.pts)) { die(); return; }
-          } else if (o.k === 'saw') {
-            var sy = sawY(o);
-            var rr = o.r * 0.82 + 3;
-            var dx = px - o.x, dy = py - sy;
-            if (dx * dx + dy * dy < rr * rr) { die(); return; }
-            var rr2 = o.r * 0.82;
-            var dx2 = px + 11 - o.x;
-            if (dx2 * dx2 + dy * dy < rr2 * rr2) { die(); return; }
+        // collisions — skipped entirely during the brief
+        // post-revive grace (invUntil), so a revived arrow is
+        // not killed again in the same instant. Any other hit
+        // ends the run (1 life per run).
+        if (nowS >= invUntil) {
+          var obs = currentObs();
+          var px = player.x, py = player.y;
+          for (var j = 0; j < obs.length; j++) {
+            var o = obs[j];
+            var ow = o.w || SPIKE;
+            if (o.x > px + 30 || o.x + ow < px - 30) continue;
+            if (o.k === 'rect') {
+              if (circleRect(px, py, 6.5, o.x + 3, o.y + 3, o.w - 6, o.h - 6) ||
+                  circleRect(px + 11, py, 4, o.x + 2, o.y + 2, o.w - 4, o.h - 4)) { hitObstacle(); return; }
+            } else if (o.k === 'spike') {
+              if (inSpike(px, py, o) || inSpike(px + 11, py, o)) { hitObstacle(); return; }
+            } else if (o.k === 'tri') {
+              if (circlePoly(px, py, 5, o.pts) || circlePoly(px + 11, py, 3, o.pts)) { hitObstacle(); return; }
+            } else if (o.k === 'poly') {
+              if (circlePoly(px, py, 6, o.pts) || circlePoly(px + 11, py, 3.5, o.pts)) { hitObstacle(); return; }
+            } else if (o.k === 'saw') {
+              var sy = sawY(o);
+              var rr = o.r * 0.82 + 3;
+              var dx = px - o.x, dy = py - sy;
+              if (dx * dx + dy * dy < rr * rr) { hitObstacle(); return; }
+              var rr2 = o.r * 0.82;
+              var dx2 = px + 11 - o.x;
+              if (dx2 * dx2 + dy * dy < rr2 * rr2) { hitObstacle(); return; }
+            }
           }
         }
 
@@ -2676,28 +3796,114 @@
         }
       }
 
+      /* The HUD text / bar are recomputed every frame — but
+         the DOM is only touched when the shown value actually
+         changes (whole percent points), so a steady run costs
+         no style recalc or layout per frame. */
+      var lastHudPct = null, lastHudBar = null;
       function updateHUD(p) {
+        updateTrialBadge();
+        var txt, w;
         if (mode === 'endless') {
-          var m = Math.floor(player.x / 50);
-          pctEl.textContent = m + 'm';
-          barEl.style.width = Math.min(100, (player.x % 5000) / 50) + '%';
+          txt = Math.floor(player.x / 50) + 'm';
+          w = Math.floor(Math.min(100, (player.x % 5000) / 50)) + '%';
         } else {
-          pctEl.textContent = p + '%';
-          barEl.style.width = p + '%';
+          txt = p + '%';
+          w = p + '%';
         }
+        if (txt !== lastHudPct) { lastHudPct = txt; pctEl.textContent = txt; }
+        if (w !== lastHudBar) { lastHudBar = w; barEl.style.width = w; }
       }
 
       /* ---------------- Draw ---------------- */
       function drawBackground() {
-        // The original's tunnel: one flat, solid, saturated
-        // colour per level — the theme's own colour, wall to
-        // wall. The dark lattice solids are cut out of it.
+        // The reference look: a DARK backdrop (the theme's own
+        // deep background gradient, navy/purple family) with a
+        // subtle grid — never a flat empty solid colour. The
+        // bright corridor walls and obstacles are drawn over
+        // this in drawWorld(), so the tunnel reads clearly.
         var th = THEMES[activeThemeIdx()] || THEMES[0];
-        ctx.fillStyle = th.tun;
+        ctx.fillStyle = gradOf(th);
         // In the portrait fit the visible height exceeds the
         // playfield: fill the backdrop margins too, so no
         // unpainted strip shows above or below the corridor.
         ctx.fillRect(-2, -YOFF - 2, VW + 4, VH + YOFF * 2 + 4);
+        // Subtle grid, scrolling with the world.
+        var gs = 54;
+        var off = -(camX % gs);
+        ctx.save();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = hexA(th.edge, 0.09);
+        ctx.beginPath();
+        for (var gx = off; gx <= VW + gs; gx += gs) { ctx.moveTo(gx, -YOFF - 2); ctx.lineTo(gx, VH + YOFF + 2); }
+        ctx.stroke();
+        ctx.strokeStyle = hexA(th.edge, 0.06);
+        ctx.beginPath();
+        for (var gy = -YOFF; gy <= VH + YOFF + gs; gy += gs) { ctx.moveTo(-2, gy); ctx.lineTo(VW + 2, gy); }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      /* The corridor walls: filled dark bands (a deep shade of
+         the theme colour under its wall pattern) closed by a
+         neon edge tube in the theme's edge colour, with the
+         theme's spikes studding both edges, pointing inward —
+         the frame of every reference screen. Drawn UNDER the
+         obstacles, so blocks, tunnel walls and zigzags merge
+         into the same tunnel. */
+      function drawCorridor(viewL, viewR, th) {
+        var step = 24, x;
+        ctx.save();
+        // --- top wall band ---
+        ctx.beginPath();
+        ctx.moveTo(viewL, -YOFF - 4);
+        for (x = viewL; x <= viewR; x += step) ctx.lineTo(x, corridorTop(x));
+        ctx.lineTo(viewR, corridorTop(viewR));
+        ctx.lineTo(viewR, -YOFF - 4);
+        ctx.closePath();
+        ctx.fillStyle = shade(th.tun, 0.13);
+        ctx.fill();
+        ctx.fillStyle = patternOf(th, true);
+        ctx.globalAlpha = 0.42;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        // --- bottom wall band ---
+        ctx.beginPath();
+        ctx.moveTo(viewL, VH + YOFF + 4);
+        for (x = viewL; x <= viewR; x += step) ctx.lineTo(x, corridorBot(x));
+        ctx.lineTo(viewR, corridorBot(viewR));
+        ctx.lineTo(viewR, VH + YOFF + 4);
+        ctx.closePath();
+        ctx.fillStyle = shade(th.tun, 0.13);
+        ctx.fill();
+        ctx.fillStyle = patternOf(th, true);
+        ctx.globalAlpha = 0.42;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        // --- neon edge tubes ---
+        ctx.lineWidth = 3;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (x = viewL; x <= viewR; x += step) { var yt = corridorTop(x); if (x === viewL) ctx.moveTo(x, yt); else ctx.lineTo(x, yt); }
+        neonStroke(th.edge, '#ffffff');
+        ctx.beginPath();
+        for (x = viewL; x <= viewR; x += step) { var yb = corridorBot(x); if (x === viewL) ctx.moveTo(x, yb); else ctx.lineTo(x, yb); }
+        neonStroke(th.edge, '#ffffff');
+        // --- spikes studding both edges, pointing inward ---
+        ctx.fillStyle = th.spike;
+        ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+        ctx.lineWidth = 1.4;
+        var s0 = Math.floor(viewL / 48) * 48;
+        for (x = s0; x <= viewR; x += 48) {
+          var et = corridorTop(x + 24), eb = corridorBot(x + 24);
+          ctx.beginPath();
+          ctx.moveTo(x, corridorTop(x)); ctx.lineTo(x + 48, corridorTop(x + 48)); ctx.lineTo(x + 24, et + 20);
+          ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(x, corridorBot(x)); ctx.lineTo(x + 48, corridorBot(x + 48)); ctx.lineTo(x + 24, eb - 20);
+          ctx.closePath(); ctx.fill(); ctx.stroke();
+        }
+        ctx.restore();
       }
 
       function draw() {
@@ -2714,11 +3920,18 @@
         else drawWorld();
         ctx.restore();
 
-        // vignette (spans the full visible height, margins included)
-        var v = ctx.createRadialGradient(VW / 2, VH / 2, VH * 0.45, VW / 2, VH / 2, (VH + YOFF * 2) * 0.95);
-        v.addColorStop(0, 'rgba(0,0,0,0)');
-        v.addColorStop(1, 'rgba(2,0,10,0.28)');
-        ctx.fillStyle = v;
+        // vignette (spans the full visible height, margins
+        // included). The gradient depends only on the viewport
+        // size, so it is created once and cached — rebuilding a
+        // radial gradient every frame was pure waste.
+        var vigKey = VW + 'x' + VH + 'x' + YOFF;
+        if (!draw._vig || draw._vig.key !== vigKey) {
+          var v = ctx.createRadialGradient(VW / 2, VH / 2, VH * 0.45, VW / 2, VH / 2, (VH + YOFF * 2) * 0.95);
+          v.addColorStop(0, 'rgba(0,0,0,0)');
+          v.addColorStop(1, 'rgba(2,0,10,0.28)');
+          draw._vig = { key: vigKey, grad: v };
+        }
+        ctx.fillStyle = draw._vig.grad;
         ctx.fillRect(-2, -YOFF - 2, VW + 4, VH + YOFF * 2 + 4);
       }
 
@@ -2730,7 +3943,7 @@
         // Twinkling starfield over the theme backdrop.
         ctx.save();
         ctx.fillStyle = '#ffffff';
-        for (var si = 0; si < 80; si++) {
+        for (var si = 0; si < (MOBILE_FX ? 44 : 80); si++) {
           var sx2 = camX + ((si * 173.3) % (VW + 8));
           var sy2 = (si * 269.7) % VH;
           ctx.globalAlpha = 0.2 + 0.6 * Math.abs(Math.sin(nowS * 1.2 + si * 1.7));
@@ -2743,13 +3956,13 @@
         ctx.lineWidth = 3;
         ctx.lineCap = 'round';
         var pal = [th.edge, th.spike, th.saw, th.arrow, th.trail];
-        for (var di = 0; di < 26; di++) {
+        for (var di = 0; di < (MOBILE_FX ? 14 : 26); di++) {
           var dxp = camX + ((di * 331.7) % (VW + 8));
           var dyp = 84 + ((di * 197.3) % (VH - 190));
           var dcol = pal[di % pal.length];
           ctx.strokeStyle = dcol;
           ctx.shadowColor = dcol;
-          ctx.shadowBlur = 9;
+          ctx.shadowBlur = fxBlur(9);
           ctx.globalAlpha = 0.5 + 0.4 * Math.sin(nowS * 1.6 + di * 2.1);
           ctx.beginPath();
           ctx.moveTo(dxp, dyp); ctx.lineTo(dxp + 13, dyp);
@@ -2762,7 +3975,7 @@
         ctx.strokeStyle = th.trail;
         ctx.lineWidth = 3;
         ctx.shadowColor = th.trail;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = fxBlur(12);
         ctx.beginPath();
         for (var wx = -12; wx <= VW + 12; wx += 14) {
           var wy = VH - 94 + Math.sin((wx + bgScroll * 1.6) * 0.02) * 13;
@@ -2800,6 +4013,10 @@
       function drawWorld() {
         var viewL = camX - 60, viewR = camX + VW + 60;
 
+        // the bounded corridor itself — walls, neon edges and
+        // wall spikes — under everything else
+        drawCorridor(viewL, viewR, THEMES[activeThemeIdx()] || THEMES[0]);
+
         // practice checkpoint beams
         if (mode === 'classic' && practice) {
           var cps = LEVELS[levelIdx].checkpoints;
@@ -2809,7 +4026,7 @@
             var done = lastCheckpoint >= cps[i];
             ctx.strokeStyle = done ? 'rgba(57,255,142,0.95)' : hexA(THEMES[activeThemeIdx()].edge, 0.65);
             ctx.shadowColor = done ? '#39ff8e' : THEMES[activeThemeIdx()].edge;
-            ctx.shadowBlur = 12;
+            ctx.shadowBlur = fxBlur(12);
             ctx.lineWidth = 3;
             ctx.setLineDash([12, 10]);
             ctx.beginPath(); ctx.moveTo(cps[i], 14); ctx.lineTo(cps[i], VH - 14); ctx.stroke();
@@ -2832,12 +4049,12 @@
             ctx.scale(pulse, pulse);
             ctx.strokeStyle = THEMES[activeThemeIdx()].edge;
             ctx.lineWidth = 7;
-            ctx.shadowColor = THEMES[activeThemeIdx()].edge; ctx.shadowBlur = 36;
+            ctx.shadowColor = THEMES[activeThemeIdx()].edge; ctx.shadowBlur = fxBlur(36);
             ctx.beginPath(); ctx.ellipse(0, 0, 34, 128, 0, 0, Math.PI * 2); ctx.stroke();
             ctx.stroke();
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 2.5;
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = fxBlur(10);
             ctx.beginPath(); ctx.ellipse(0, 0, 22, 108, 0, 0, Math.PI * 2); ctx.stroke();
             ctx.restore();
           }
@@ -2872,7 +4089,7 @@
           ctx.globalAlpha = Math.max(0, 1 - pt.t / pt.life);
           ctx.fillStyle = pt.color;
           ctx.shadowColor = pt.color;
-          ctx.shadowBlur = 5;
+          ctx.shadowBlur = fxBlur(5);
           ctx.fillRect(-pt.size / 2, -pt.size / 2, pt.size, pt.size);
           ctx.restore();
         }
@@ -2886,15 +4103,61 @@
         var lw = ctx.lineWidth;
         ctx.strokeStyle = color;
         ctx.shadowColor = color;
-        ctx.shadowBlur = 14;
+        ctx.shadowBlur = fxBlur(14);
         ctx.stroke();
-        ctx.shadowBlur = 0;
+        ctx.shadowBlur = fxBlur(0);
         if (core) {
           ctx.strokeStyle = core;
           ctx.lineWidth = Math.max(1.1, lw * 0.36);
           ctx.stroke();
           ctx.lineWidth = lw;
         }
+      }
+      /* Block-edge glow, pre-rendered: the neon edge stroke
+         (colour glow + white core) for one block shape is
+         painted ONCE into a small offscreen sprite and then
+         stamped with drawImage each frame — pixel for pixel
+         the same glow neonStroke used to paint (same
+         lineWidth, same shadowBlur, same colours, drawn at
+         the same scale), but the shadowBlur raster work
+         happens once per shape, not once per block per
+         frame. That per-block shadow was the whole
+         mid-level lag: in the dense zig-zag sections ~50
+         blocks each paid a full shadowed stroke and the
+         frame doubled to ~30 ms. Shapes repeat constantly
+         (zig steps, tunnel rects), so the cache stays
+         small; it is keyed by theme + scale + shape, and
+         flushed if it ever grows past 48 entries. Each
+         block still draws its sprite in its original
+         order, right after its own fill, so the layering
+         is exactly as before. */
+      var glowSprites = {};
+      var glowSpriteCount = 0;
+      function glowSprite(th, key, w, h, build) {
+        var skey = THEMES.indexOf(th) + '|' + SCALE.toFixed(2) + '|' + fxBlur(14) + '|' + key;
+        var s = glowSprites[skey];
+        if (s) return s;
+        if (glowSpriteCount > 48) { glowSprites = {}; glowSpriteCount = 0; }
+        var pad = Math.ceil(fxBlur(14)) + 3;
+        var cv = document.createElement('canvas');
+        cv.width = Math.max(2, Math.ceil((w + pad * 2) * SCALE));
+        cv.height = Math.max(2, Math.ceil((h + pad * 2) * SCALE));
+        var g = cv.getContext('2d');
+        g.scale(SCALE, SCALE);
+        g.translate(pad, pad);
+        g.lineWidth = 2.5;
+        g.lineJoin = 'round';
+        g.strokeStyle = th.edge;
+        g.shadowColor = th.edge;
+        g.shadowBlur = fxBlur(14);
+        build(g);
+        g.shadowBlur = 0;
+        g.strokeStyle = '#ffffff';
+        g.lineWidth = 1.1;
+        build(g);
+        s = { cv: cv, pad: pad, w: w + pad * 2, h: h + pad * 2 };
+        glowSprites[skey] = s; glowSpriteCount++;
+        return s;
       }
       /* White glyphs stamped into lattice blocks, as in the
          original: a gear/saw symbol in a tile, an inverted-V
@@ -2931,18 +4194,31 @@
         }
         ctx.restore();
       }
-      /* Every solid is a cut-out of the same material, as in
-         the original: the dark diamond lattice of the theme
-         colour with a crisp white outline — no glow, no
-         separate textures. */
+      /* Lattice/grid blocks, as in the references: a dark body
+         filled with the ACTIVE theme's own grid pattern (hex,
+         lattice, stripes, diamonds…) and closed by a neon edge
+         tube in the theme's edge colour with a white-hot core —
+         so blocks, corridor walls and spikes all read as one
+         set in the theme's palette. */
       function drawRect(o, th) {
         ctx.save();
-        ctx.fillStyle = latticeOf(th);
+        /* One fill only: the pattern tile already paints the
+           block colour as its background (see paintPattern),
+           so the solid fill underneath it was pure waste —
+           one whole fill per block, every frame. The neon
+           edge is a pre-rendered glow sprite (see
+           glowSprite) — the same lines neonStroke used to
+           paint, stamped with drawImage instead of a fresh
+           shadowed stroke per block per frame. */
+        ctx.fillStyle = patternOf(th, false);
         ctx.fillRect(o.x, o.y, o.w, o.h);
         if (o.glyph) drawGlyph(o, th);
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2.5;
-        ctx.strokeRect(o.x + 1.25, o.y + 1.25, Math.max(0, o.w - 2.5), Math.max(0, o.h - 2.5));
+        var gs = glowSprite(th, 'r' + o.w + 'x' + o.h, o.w, o.h, function (g) {
+          g.beginPath();
+          g.rect(1.25, 1.25, Math.max(0, o.w - 2.5), Math.max(0, o.h - 2.5));
+          g.stroke();
+        });
+        ctx.drawImage(gs.cv, o.x - gs.pad, o.y - gs.pad, gs.w, gs.h);
         ctx.restore();
       }
       function drawPoly(o, th) {
@@ -2952,23 +4228,61 @@
         ctx.moveTo(pts[0][0], pts[0][1]);
         for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
         ctx.closePath();
-        ctx.fillStyle = latticeOf(th);
+        /* Pattern fill only — same one-fill saving as
+           drawRect: the tile already carries the block
+           colour, so no solid fill underneath. The edge is
+           the pre-rendered glow sprite for this polygon
+           shape (see glowSprite). */
+        ctx.fillStyle = patternOf(th, false);
         ctx.fill();
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2.5;
-        ctx.lineJoin = 'round';
-        ctx.stroke();
+        var mnx = Infinity, mny = Infinity, mxx = -Infinity, mxy = -Infinity;
+        for (var i = 0; i < pts.length; i++) {
+          if (pts[i][0] < mnx) mnx = pts[i][0];
+          if (pts[i][0] > mxx) mxx = pts[i][0];
+          if (pts[i][1] < mny) mny = pts[i][1];
+          if (pts[i][1] > mxy) mxy = pts[i][1];
+        }
+        var rel = [];
+        for (var i = 0; i < pts.length; i++) rel.push([Math.round(pts[i][0] - mnx), Math.round(pts[i][1] - mny)]);
+        var gs = glowSprite(th, 'p' + rel.map(function (p) { return p[0] + ',' + p[1]; }).join(';'), mxx - mnx, mxy - mny, function (g) {
+          g.beginPath();
+          g.moveTo(rel[0][0], rel[0][1]);
+          for (var k = 1; k < rel.length; k++) g.lineTo(rel[k][0], rel[k][1]);
+          g.closePath();
+          g.stroke();
+        });
+        ctx.drawImage(gs.cv, mnx - gs.pad, mny - gs.pad, gs.w, gs.h);
         ctx.restore();
       }
       function drawSpike(o, th) {
         var tipY = o.dir === 'up' ? o.baseY - o.h : o.baseY + o.h;
         ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(o.x, o.baseY);
-        ctx.lineTo(o.x + o.w / 2, tipY);
-        ctx.lineTo(o.x + o.w, o.baseY);
-        ctx.closePath();
-        ctx.fillStyle = spikeGrad(th, o.x + o.w / 2, o.baseY, o.x + o.w / 2, tipY);
+        /* Reference spikes: solid triangles in the theme's
+           spike colour, dark at the base, bright at the tip,
+           with a crisp light outline. On touch devices a flat
+           fill of the same spike colour stands in for the
+           gradient (spikes are the most numerous solid). On
+           desktop the gradient is cached per theme + height
+           in spike-local coordinates (see spikeFill) — the
+           fill paints identically, but a dense spike strip
+           no longer pays a fresh gradient object per spike,
+           per frame. */
+        if (MOBILE_FX) {
+          ctx.beginPath();
+          ctx.moveTo(o.x, o.baseY);
+          ctx.lineTo(o.x + o.w / 2, tipY);
+          ctx.lineTo(o.x + o.w, o.baseY);
+          ctx.closePath();
+          ctx.fillStyle = th.spike;
+        } else {
+          ctx.translate(o.x + o.w / 2, o.baseY);
+          ctx.beginPath();
+          ctx.moveTo(-o.w / 2, 0);
+          ctx.lineTo(0, tipY - o.baseY);
+          ctx.lineTo(o.w / 2, 0);
+          ctx.closePath();
+          ctx.fillStyle = spikeFill(th, o.dir, o.h);
+        }
         ctx.fill();
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
@@ -2982,11 +4296,25 @@
         var pts = o.pts;
         var gx = (pts[0][0] + pts[1][0] + pts[2][0]) / 3, gy = (pts[0][1] + pts[1][1] + pts[2][1]) / 3;
         ctx.save();
+        /* Same dark-centroid to bright-tip blend as the old
+           per-triangle gradient, but the gradient is cached
+           per theme in triangle-local coordinates (see
+           triFill) — the zig-zag teeth no longer pay a fresh
+           gradient object per triangle, per frame. */
+        if (!MOBILE_FX) ctx.translate(gx, gy);
         ctx.beginPath();
-        ctx.moveTo(pts[0][0], pts[0][1]);
-        for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+        if (MOBILE_FX) {
+          ctx.moveTo(pts[0][0], pts[0][1]);
+          for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+        } else {
+          for (var i = 0; i < pts.length; i++) {
+            var rx = pts[i][0] - gx, ry = pts[i][1] - gy;
+            if (i === 0) ctx.moveTo(rx, ry); else ctx.lineTo(rx, ry);
+          }
+        }
         ctx.closePath();
-        ctx.fillStyle = spikeGrad(th, gx, gy, pts[2][0], pts[2][1]);
+        if (MOBILE_FX) ctx.fillStyle = th.spike;
+        else ctx.fillStyle = triFill(th, pts[2][0] - gx, pts[2][1] - gy);
         ctx.fill();
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
@@ -3003,7 +4331,10 @@
           // the original: a white-edged lattice square behind
           // the blade.
           var s = o.r * 2.1;
-          ctx.fillStyle = latticeOf(th);
+          /* Pattern fill only — the tile already carries
+             the block colour (same one-fill saving as
+             drawRect / drawPoly). */
+          ctx.fillStyle = patternOf(th, false);
           ctx.fillRect(-s / 2, -s / 2, s, s);
           ctx.strokeStyle = '#ffffff';
           ctx.lineWidth = 2.5;
@@ -3019,22 +4350,28 @@
           if (i === 0) ctx.moveTo(gx, gy); else ctx.lineTo(gx, gy);
         }
         ctx.closePath();
-        /* The original's blade: a black disc with a dozen
-           triangular teeth, a white rim and a hub in the
-           level colour. */
-        ctx.fillStyle = '#0a0a0d';
+        /* The reference blade: a glowing disc in the theme's
+           saw colour with a dozen triangular teeth, a white
+           rim, a dark hub ring and a bright core. */
+        ctx.fillStyle = th.saw;
+        ctx.shadowColor = th.saw;
+        ctx.shadowBlur = fxBlur(13);
         ctx.fill();
+        ctx.shadowBlur = fxBlur(0);
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1.6;
         ctx.stroke();
         ctx.rotate(-(nowS * 3.3 + (o.ph || 0)));
         ctx.beginPath();
-        ctx.arc(0, 0, o.r * 0.32, 0, Math.PI * 2);
-        ctx.fillStyle = th.edge;
+        ctx.arc(0, 0, o.r * 0.34, 0, Math.PI * 2);
+        ctx.fillStyle = shade(th.saw, 0.4);
         ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
         ctx.beginPath();
         ctx.arc(0, 0, o.r * 0.13, 0, Math.PI * 2);
-        ctx.fillStyle = '#0a0a0d';
+        ctx.fillStyle = '#ffffff';
         ctx.fill();
         ctx.restore();
       }
@@ -3092,7 +4429,7 @@
         for (i = 0; i < n; i++) base.push([trail[i].x, trail[i].y]);
         function faintLine(alpha) {
           ctx.strokeStyle = tc; ctx.globalAlpha = alpha; ctx.lineWidth = 2;
-          ctx.shadowColor = tc; ctx.shadowBlur = 6;
+          ctx.shadowColor = tc; ctx.shadowBlur = fxBlur(6);
           strokePts(base);
           ctx.globalAlpha = 1;
         }
@@ -3102,20 +4439,38 @@
           if (rot) ctx.rotate(rot);
           ctx.scale(s, s);
           ctx.globalAlpha = alpha == null ? 1 : alpha;
-          ctx.fillStyle = fill; ctx.shadowColor = fill; ctx.shadowBlur = 6;
+          ctx.fillStyle = fill; ctx.shadowColor = fill; ctx.shadowBlur = fxBlur(6);
           ctx.fill(P);
           ctx.restore();
         }
 
+        /* A custom (server-uploaded) trail stamps its image
+           along the flight path — small near the tail, growing
+           toward the arrow — over a faint guide line. */
+        if (TRAILS[eq.trails].custom) {
+          faintLine(0.18);
+          var trImg = customImg(TRAILS[eq.trails]);
+          if (trImg) {
+            for (i = 0; i < n; i += 3) {
+              f = i / n;
+              var ts = 6 + f * 13;
+              ctx.globalAlpha = 0.3 + 0.65 * f;
+              ctx.drawImage(trImg, trail[i].x - ts / 2, trail[i].y - ts / 2, ts, ts);
+            }
+            ctx.globalAlpha = 1;
+          }
+          ctx.restore();
+          return;
+        }
         if (style === 'ribbon') {
           var pts = offPts(function (k) { return Math.sin(k * 0.5 + nowS * 6) * 5; });
           ctx.strokeStyle = tc; ctx.globalAlpha = 0.55; ctx.lineWidth = 9;
-          ctx.shadowColor = tc; ctx.shadowBlur = 10;
+          ctx.shadowColor = tc; ctx.shadowBlur = fxBlur(10);
           strokePts(pts);
-          ctx.globalAlpha = 0.95; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.shadowBlur = 0;
+          ctx.globalAlpha = 0.95; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.shadowBlur = fxBlur(0);
           strokePts(pts);
         } else if (style === 'fade') {
-          ctx.shadowColor = tc; ctx.shadowBlur = 8;
+          ctx.shadowColor = tc; ctx.shadowBlur = fxBlur(8);
           for (i = 1; i < n; i++) {
             f = i / n;
             ctx.strokeStyle = tc;
@@ -3132,10 +4487,10 @@
             f = i / n;
             ctx.globalAlpha = 0.45 + 0.5 * f;
             ctx.strokeStyle = tc; ctx.lineWidth = 1.6;
-            ctx.shadowColor = tc; ctx.shadowBlur = 5;
+            ctx.shadowColor = tc; ctx.shadowBlur = fxBlur(5);
             ctx.beginPath(); ctx.arc(trail[i].x, trail[i].y, 1.8 + f * 3.6, 0, 6.3); ctx.stroke();
             ctx.globalAlpha *= 0.9;
-            ctx.fillStyle = '#ffffff'; ctx.shadowBlur = 0;
+            ctx.fillStyle = '#ffffff'; ctx.shadowBlur = fxBlur(0);
             ctx.beginPath(); ctx.arc(trail[i].x - 1.2, trail[i].y - 1.2, 0.8, 0, 6.3); ctx.fill();
           }
         } else if (style === 'sparkles') {
@@ -3169,12 +4524,12 @@
             ctx.translate(px2, py2);
             ctx.rotate(Math.atan2(dy, dx));
             ctx.globalAlpha = 0.5 + 0.45 * f;
-            ctx.fillStyle = tc; ctx.shadowColor = tc; ctx.shadowBlur = 5;
+            ctx.fillStyle = tc; ctx.shadowColor = tc; ctx.shadowBlur = fxBlur(5);
             ctx.beginPath(); ctx.ellipse(0, 0, 3 + f * 3.4, 1.6 + f * 1.4, 0, 0, 6.3); ctx.fill();
             ctx.restore();
           }
         } else if (style === 'smoke') {
-          ctx.shadowBlur = 0;
+          ctx.shadowBlur = fxBlur(0);
           for (i = 0; i < n; i += 2) {
             f = i / n;
             ctx.globalAlpha = 0.15;
@@ -3185,14 +4540,14 @@
           }
         } else if (style === 'helix') {
           ctx.strokeStyle = tc; ctx.lineWidth = 2.2;
-          ctx.shadowColor = tc; ctx.shadowBlur = 8;
+          ctx.shadowColor = tc; ctx.shadowBlur = fxBlur(8);
           strokePts(offPts(function (k) { return Math.sin(k * 0.45) * 7; }));
           strokePts(offPts(function (k) { return -Math.sin(k * 0.45) * 7; }));
-          ctx.fillStyle = '#ffffff'; ctx.shadowBlur = 0;
+          ctx.fillStyle = '#ffffff'; ctx.shadowBlur = fxBlur(0);
           for (i = 0; i < n; i += 8) { ctx.beginPath(); ctx.arc(trail[i].x, trail[i].y, 1.3, 0, 6.3); ctx.fill(); }
         } else if (style === 'confetti') {
           var pal = [th.edge, th.spike, th.saw, tc];
-          ctx.shadowBlur = 0;
+          ctx.shadowBlur = fxBlur(0);
           for (i = 0; i < n; i += 3) {
             f = i / n;
             ctx.save();
@@ -3212,9 +4567,9 @@
         } else if (style === 'boltpath') {
           var jag = offPts(function (k) { return ((k * 53) % 17) - 8; });
           ctx.strokeStyle = tc; ctx.lineWidth = 3;
-          ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 11;
+          ctx.shadowColor = '#ffffff'; ctx.shadowBlur = fxBlur(11);
           strokePts(jag);
-          ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.3; ctx.shadowBlur = 0;
+          ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.3; ctx.shadowBlur = fxBlur(0);
           strokePts(jag);
         } else if (style === 'orbit') {
           faintLine(0.2);
@@ -3222,10 +4577,10 @@
             f = i / n;
             ctx.globalAlpha = 0.35 + 0.6 * f;
             ctx.strokeStyle = tc; ctx.lineWidth = 1.8;
-            ctx.shadowColor = tc; ctx.shadowBlur = 6;
+            ctx.shadowColor = tc; ctx.shadowBlur = fxBlur(6);
             ctx.beginPath(); ctx.arc(trail[i].x, trail[i].y, 2.5 + f * 5.5, 0, 6.3); ctx.stroke();
             ctx.globalAlpha = 1;
-            ctx.fillStyle = '#ffffff'; ctx.shadowBlur = 0;
+            ctx.fillStyle = '#ffffff'; ctx.shadowBlur = fxBlur(0);
             ctx.beginPath(); ctx.arc(trail[i].x, trail[i].y, 1.2, 0, 6.3); ctx.fill();
           }
         } else if (style === 'fireflies') {
@@ -3233,7 +4588,7 @@
             var pu = 0.5 + 0.5 * Math.sin(nowS * 5 + i * 1.7);
             ctx.globalAlpha = 0.45 + 0.55 * pu;
             ctx.fillStyle = i % 9 === 0 ? '#ffffff' : tc;
-            ctx.shadowColor = tc; ctx.shadowBlur = 14;
+            ctx.shadowColor = tc; ctx.shadowBlur = fxBlur(14);
             ctx.beginPath(); ctx.arc(trail[i].x, trail[i].y, 1.4 + pu * 1.7, 0, 6.3); ctx.fill();
           }
         } else if (style === 'galaxy') {
@@ -3245,11 +4600,11 @@
             ctx.rotate(i * 0.8 + nowS * 1.5);
             ctx.globalAlpha = 0.9;
             ctx.strokeStyle = tc; ctx.lineWidth = 2;
-            ctx.shadowColor = tc; ctx.shadowBlur = 7;
+            ctx.shadowColor = tc; ctx.shadowBlur = fxBlur(7);
             ctx.beginPath(); ctx.arc(0, 0, 3 + f * 4.5, 0, 4.4); ctx.stroke();
             ctx.beginPath(); ctx.arc(0, 0, 1.6 + f * 2, 2.2, 6.4); ctx.stroke();
             ctx.restore();
-            ctx.fillStyle = '#ffffff'; ctx.shadowBlur = 0;
+            ctx.fillStyle = '#ffffff'; ctx.shadowBlur = fxBlur(0);
             ctx.beginPath(); ctx.arc(trail[i].x, trail[i].y, 1.1, 0, 6.3); ctx.fill();
           }
         }
@@ -3258,18 +4613,46 @@
 
       function drawPlayer() {
         var A = ARROWS[eq.arrows];
-        if (!A._p) A._p = new Path2D(A.d);
+        if (A.d && !A._p) A._p = new Path2D(A.d);
         var ang = Math.atan2(player.vy, speed);
         ctx.save();
         ctx.translate(player.x, player.y);
         ctx.rotate(ang);
-        // The arrow wears the equipped color item — solid,
-        // fade gradient or motif pattern — with a glow in the
-        // color's key tone. The default is the signature Volt
-        // Bolt, Neon Wave's own lightning arrow.
-        var fill = playerFill();
-        ctx.shadowColor = colorRep();
-        ctx.shadowBlur = 20;
+        /* Post-revive grace: the arrow blinks — flashing
+           translucent roughly five times a second — until the
+           two seconds are up. (A hit grants no invincibility:
+           with 1 life per run, the first hit ends the run.) */
+        if (state === 'playing' && nowS < invUntil && Math.floor(nowS * 5) % 2 === 0) ctx.globalAlpha = 0.3;
+        /* A custom (server-uploaded) arrow flies as its image:
+           the uploaded picture IS the arrow sprite, drawn rotated
+           to the flight angle, with the usual glow. Until the
+           image loads, the default Wave Triangle stands in. */
+        if (A.custom) {
+          var aImg = customImg(A);
+          if (aImg) {
+            ctx.shadowColor = colorRep();
+            ctx.shadowBlur = fxBlur(16);
+            ctx.drawImage(aImg, -21, -21, 42, 42);
+            ctx.restore();
+            return;
+          }
+          A = ARROWS[0];
+          if (!A._p) A._p = new Path2D(A.d);
+        }
+        /* Colours follow the one set of twelve designs: when a
+           theme is pinned in the shop (bought or on trial), the
+           arrow flies in THAT theme's arrow colour, so arrow,
+           trail and obstacles all match the theme. On "Auto"
+           the arrow wears the equipped color item — solid, fade
+           gradient or motif pattern — with a glow in the color's
+           key tone. The arrow's SHAPE never changes either way:
+           it is always the equipped Neon Wave arrow design. */
+        var ft = fixedTheme();
+        var fill, glowC;
+        if (ft >= 0) { fill = THEMES[ft].arrow; glowC = THEMES[ft].arrow; }
+        else { fill = playerFill(); glowC = colorRep(); }
+        ctx.shadowColor = glowC;
+        ctx.shadowBlur = fxBlur(20);
         if (A.mode === 'stroke') {
           ctx.strokeStyle = fill;
           ctx.lineWidth = A.lw || 3.4;
@@ -3281,7 +4664,7 @@
           var rule = A.mode === 'evenodd' ? 'evenodd' : 'nonzero';
           ctx.fill(A._p, rule);
           ctx.fill(A._p, rule);
-          ctx.shadowBlur = 0;
+          ctx.shadowBlur = fxBlur(0);
           ctx.strokeStyle = 'rgba(12,0,24,0.5)';
           ctx.lineWidth = 1.3;
           ctx.lineJoin = 'round';
@@ -3306,6 +4689,7 @@
           if (state === 'menu') menuThemeT += dt;
           if (state === 'playing' || state === 'dead') update(dt);
           else { bgScroll += dt * 60; updateParticles(dt); }
+          syncAdBars();
           draw();
         } catch (err) {
           // One bad frame must never freeze the game: the next
@@ -3322,10 +4706,11 @@
       }
       function pressOff() { ptrDown = false; }
       canvas.addEventListener('pointerdown', pressOn);
-      /* The loop starts on the first interaction anywhere —
-         menu included — and keeps running across screens. */
-      document.addEventListener('pointerdown', function () { startMusic(); });
-      document.addEventListener('keydown', function () { startMusic(); });
+      /* The current theme's track starts on the first
+         interaction anywhere — menu included — and keeps
+         running across screens. */
+      document.addEventListener('pointerdown', function () { resumeMusic(); });
+      document.addEventListener('keydown', function () { resumeMusic(); });
       window.addEventListener('pointerup', pressOff);
       window.addEventListener('pointercancel', pressOff);
       canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
@@ -3567,7 +4952,7 @@
           ? '<path d="' + arrow.d + '" fill="none" stroke="' + f.stroke + '" stroke-width="' + arrow.lw + '" stroke-linecap="round" stroke-linejoin="round"/>'
           : '<path d="' + arrow.d + '" fill="' + f.fill + '" fill-rule="' + (arrow.mode === 'evenodd' ? 'evenodd' : 'nonzero') + '" stroke="rgba(0,0,0,0.35)" stroke-width="0.7" stroke-linejoin="round"/>';
         return '<svg viewBox="0 0 200 150">' + f.defs +
-          '<g transform="translate(0,55)">' + trailArt(trailId, THEMES[activeThemeIdx()].trail) + '</g>' +
+          '<g transform="translate(0,55)">' + trailArt(trailId, shopTh.trail) + '</g>' +
           '<g transform="translate(130,75) scale(2.7)">' + ap + '</g></svg>';
       }
       /* Mini scene for the Themes tab: a slice of the theme's
@@ -3576,7 +4961,7 @@
          flying on its trail color. */
       function themeSceneSVG(item) {
         var th = item.th >= 0 ? THEMES[item.th] : THEMES[activeThemeIdx()];
-        var ap = arrowPathSVG(ARROWS[eq.arrows], th.arrow, 0.7);
+        var ap = arrowPathSVG(ARROWS[eq.arrows].custom ? ARROWS[0] : ARROWS[eq.arrows], th.arrow, 0.7);
         var spikes = '';
         for (var sx = 14; sx <= 176; sx += 24) {
           spikes += '<polygon points="' + sx + ',29 ' + (sx + 12) + ',29 ' + (sx + 6) + ',43" fill="url(#spkG)" stroke="#ffffff" stroke-width="1"/>';
@@ -3601,20 +4986,156 @@
         return 'linear-gradient(180deg,' + th.bg0 + ',' + th.bg1 + ')';
       }
 
+      /* The theme the shop is currently painted in — the active
+         theme, or the selected one on the Themes tab. Every
+         item preview in the shop is rendered in THIS theme's
+         palette, so arrows, trails and colors always match the
+         theme they will be played in: one set of 12 designs,
+         same to same. Item shapes never change — only their
+         colour treatment follows the theme. */
+      var shopTh = THEMES[0];
+      /* Can the player use this item right now? Owned items,
+         plus anything on a free ad trial — a theme (trialTheme)
+         or an arrow / trail / colour (trialItems), exactly the
+         same system in every tab. */
+      function isUsable(tab, i) {
+        if (isOwned(tab, i)) return true;
+        if (tab === 'themes') return trialTheme >= 0 && TAB_ITEMS.themes[i] && TAB_ITEMS.themes[i].th === trialTheme;
+        return trialItems[tab] === i;
+      }
+      /* Is this item currently on an ad trial (not owned)? */
+      function isTrialItem(tab, i) {
+        if (isOwned(tab, i)) return false;
+        if (tab === 'themes') return trialTheme >= 0 && TAB_ITEMS.themes[i] && TAB_ITEMS.themes[i].th === trialTheme;
+        return trialItems[tab] === i;
+      }
+
       function renderPreview() {
         previewLabelEl.textContent = previewLabel;
         var idx = selItem[shopTab], it = TAB_ITEMS[shopTab][idx];
         var aIdx = shopTab === 'arrows' ? idx : eq.arrows;
         var cIdx = shopTab === 'colors' ? idx : eq.colors;
         var tIdx = shopTab === 'trails' ? idx : eq.trails;
-        if (shopTab === 'themes') previewBoxEl.innerHTML = themeSceneSVG(it);
-        else previewBoxEl.innerHTML = previewSVG(ARROWS[aIdx], COLORS[cIdx], TRAILS[tIdx].id);
+        if (it.custom) previewBoxEl.innerHTML = '<img class="customImg" src="' + it.img + '" alt="">';
+        else if (shopTab === 'themes') previewBoxEl.innerHTML = themeSceneSVG(it);
+        else previewBoxEl.innerHTML = previewSVG(
+          ARROWS[aIdx].custom ? ARROWS[0] : ARROWS[aIdx],
+          COLORS[cIdx].custom ? COLORS[0] : COLORS[cIdx],
+          TRAILS[tIdx].custom ? 'ribbon' : TRAILS[tIdx].id);
         var status;
-        if (eq[shopTab] === idx) status = 'EQUIPPED';
+        if (eq[shopTab] === idx) status = 'EQUIPPED' + (isTrialItem(shopTab, idx) ? ' (TRIAL — ends when you die)' : '');
         else if (isOwned(shopTab, idx)) status = 'Owned — tap the item to equip it';
+        else if (isTrialItem(shopTab, idx)) status = 'TRIAL ACTIVE — tap to equip it · the trial ends when you die';
+        else if (shopTab === 'themes' && it.th < 0) status = 'Auto — themes follow each level';
         else if (it.price === 0) status = 'Free — tap the item to equip it';
-        else status = fmtPrice(it.price) + ' gems' + (gems >= it.price ? ' — tap the item to buy it' : ' — not enough gems yet');
+        else if (it.custom && it.unlock === 'ads') status = adsEnabled() ? 'LOCKED — watch an ad for a free trial (ends when you die)' : 'LOCKED — ad trials are off right now';
+        else if (it.custom && it.unlock === 'paid') status = 'LOCKED — unlock forever for ' + fmtPrice(it.price) + ' gems';
+        else status = 'LOCKED — unlock forever for ' + fmtPrice(it.price) + ' gems' + (adsEnabled() ? ', or watch an ad for a free trial (ends when you die)' : '');
         previewInfoEl.textContent = it.name + ' · ' + status;
+      }
+
+      var LOCK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 1 1 6 0v3H9zm3 4a1.8 1.8 0 0 1 1 3.27V19h-2v-1.73A1.8 1.8 0 0 1 12 14z"/></svg>';
+      /* One theme PACK card, styled like a level-select card:
+         the theme's own colour, its number and name, and its
+         state — FREE / OWNED / EQUIPPED, TRIAL, or LOCKED with
+         the two unlock routes (gems forever, or a free ad
+         trial that lasts until the player dies). */
+      function themeCardHtml(i, it) {
+        var th = THEMES[it.th];
+        var ownedIt = isOwned('themes', i);
+        var isTrial = !ownedIt && trialTheme === it.th;
+        var cls = 'shopCell themePack' + (i === selItem.themes ? ' selected' : '') + (i === eq.themes ? ' equipped' : '') +
+          (!ownedIt && !isTrial ? ' locked' : '');
+        var html = '<div class="' + cls + '" data-i="' + i + '" role="button" tabindex="0" style="--cc:' + th.accent + ';--zc:' + th.accent + '" aria-label="Theme pack ' + (it.th + 1) + ': ' + it.name + '">';
+        if (!ownedIt && !isTrial) html += '<span class="lockIco">' + LOCK_SVG + '</span>';
+        html += '<span class="packNum">' + (it.th + 1) + '</span>';
+        html += '<span class="themeName">' + it.name + '</span>';
+        if (isTrial) {
+          html += '<span class="trialTag">TRIAL</span>';
+          html += '<span class="packState dim">Free trial active — play it now.<br>It locks again when you die.</span>';
+          if (i === eq.themes) html += '<span class="packState">EQUIPPED</span>';
+        } else if (ownedIt) {
+          html += '<span class="cellIcon"><span class="swatch" style="background:' + themeSwatch(it) + '"></span></span>';
+          html += '<span class="packState">' + (i === eq.themes ? 'EQUIPPED' : (it.price === 0 ? 'FREE — OWNED' : 'OWNED')) + '</span>';
+        } else {
+          html += '<span class="packActions">' +
+            '<button class="packBtn" data-act="buy" data-i="' + i + '" type="button">' + GEM_MINI + 'Unlock forever — ' + fmtPrice(it.price) + ' gems</button>' +
+            (adsEnabled() ? '<button class="packBtn alt" data-act="trial" data-i="' + i + '" type="button">&#9654; Free trial — watch ad</button>' : '') +
+            '</span>';
+        }
+        html += '</div>';
+        return html;
+      }
+
+      /* One locked / trial ITEM card for the Arrows, Trails and
+         Colours tabs — the theme-pack treatment, same as the
+         Themes tab: lock icon, the item's icon and name, and
+         either a TRIAL tag (ad trial active) or the two unlock
+         buttons: "Unlock forever — X gems" (permanent, saved)
+         and "Free trial — watch ad" (temporary, ends on death,
+         costs no gems). The gem prices are the items' existing
+         shop prices — nothing about them changed. */
+      function itemCardHtml(i, it, icon, cellCc) {
+        var isTrial = isTrialItem(shopTab, i);
+        var cls = 'shopCell themePack' + (i === selItem[shopTab] ? ' selected' : '') + (i === eq[shopTab] ? ' equipped' : '') +
+          (!isTrial ? ' locked' : '');
+        var html = '<div class="' + cls + '" data-i="' + i + '" role="button" tabindex="0" style="--cc:' + cellCc + ';--zc:' + cellCc + '" aria-label="' + it.name + (isTrial ? ' (trial)' : ' (locked)') + '">';
+        if (!isTrial) html += '<span class="lockIco">' + LOCK_SVG + '</span>';
+        html += '<span class="cellIcon">' + icon + '</span>';
+        html += '<span class="itemName">' + it.name + '</span>';
+        if (isTrial) {
+          html += '<span class="trialTag">TRIAL</span>';
+          html += '<span class="packState dim">Free trial active — play it now.<br>It locks again when you die.</span>';
+          if (i === eq[shopTab]) html += '<span class="packState">EQUIPPED</span>';
+        } else {
+          html += '<span class="packActions">' +
+            '<button class="packBtn" data-act="buy" data-i="' + i + '" type="button">' + GEM_MINI + 'Unlock forever — ' + fmtPrice(it.price) + ' gems</button>' +
+            (adsEnabled() ? '<button class="packBtn alt" data-act="trial" data-i="' + i + '" type="button">&#9654; Free trial — watch ad</button>' : '') +
+            '</span>';
+        }
+        html += '</div>';
+        return html;
+      }
+
+      /* One card for a custom (server-uploaded) item — the same
+         pack-card treatment as built-ins, but the preview is the
+         item's uploaded image, and the unlock route is the one
+         the server chose for it: "free" items are owned from the
+         moment they arrive; "paid" items unlock forever for
+         gems; "ads" items unlock as a free trial by watching an
+         ad (the button is not offered while ads are off). The
+         buttons route through the same onItemAction /
+         onThemeAction handlers as the built-in cards, and the
+         Themes tab shows the image as the theme's card picture. */
+      function customCardHtml(i, it) {
+        var ownedIt = isOwned(shopTab, i);
+        var isTrial = isTrialItem(shopTab, i);
+        var cls = 'shopCell themePack' + (i === selItem[shopTab] ? ' selected' : '') + (i === eq[shopTab] ? ' equipped' : '') +
+          (!ownedIt && !isTrial ? ' locked' : '');
+        var cc = (shopTab === 'themes' && THEMES[it.th]) ? THEMES[it.th].accent : shopTh.accent;
+        var html = '<div class="' + cls + '" data-i="' + i + '" role="button" tabindex="0" style="--cc:' + cc + ';--zc:' + cc + '" aria-label="' + it.name + '">';
+        if (!ownedIt && !isTrial) html += '<span class="lockIco">' + LOCK_SVG + '</span>';
+        html += '<span class="cellIcon"><img class="customImg" src="' + it.img + '" alt=""></span>';
+        html += '<span class="itemName">' + it.name + '</span>';
+        if (isTrial) {
+          html += '<span class="trialTag">TRIAL</span>';
+          html += '<span class="packState dim">Free trial active — play it now.<br>It locks again when you die.</span>';
+          if (i === eq[shopTab]) html += '<span class="packState">EQUIPPED</span>';
+        } else if (ownedIt) {
+          html += '<span class="packState">' + (i === eq[shopTab] ? 'EQUIPPED' : (it.price === 0 ? 'FREE — OWNED' : 'OWNED')) + '</span>';
+        } else if (it.unlock === 'paid') {
+          html += '<span class="packActions">' +
+            '<button class="packBtn" data-act="buy" data-i="' + i + '" type="button">' + GEM_MINI + 'Unlock forever — ' + fmtPrice(it.price) + ' gems</button>' +
+            '</span>';
+        } else if (it.unlock === 'ads' && adsEnabled()) {
+          html += '<span class="packActions">' +
+            '<button class="packBtn alt" data-act="trial" data-i="' + i + '" type="button">&#9654; Free trial — watch ad</button>' +
+            '</span>';
+        } else {
+          html += '<span class="packState dim">Locked</span>';
+        }
+        html += '</div>';
+        return html;
       }
 
       function renderGrid() {
@@ -3622,12 +5143,25 @@
         for (var i = 0; i < items.length; i++) {
           if (SERVER_HIDDEN[shopTab][i]) continue;   // the server catalog hid this item
           var it = items[i];
+          if (it.custom) { html += customCardHtml(i, it); continue; }
+          if (shopTab === 'themes' && it.th >= 0) { html += themeCardHtml(i, it); continue; }
           var cls = 'shopCell' + (shopTab === 'themes' ? ' themeCell' : '') + (i === selItem[shopTab] ? ' selected' : '') + (i === eq[shopTab] ? ' equipped' : '');
           var icon;
-          if (shopTab === 'arrows') icon = arrowSVG(it, THEMES[i % THEMES.length].arrow);
-          else if (shopTab === 'trails') icon = trailSVG(it.id, THEMES[i % THEMES.length].trail);
+          /* Item colours come from the theme the shop is showing
+             (shopTh) — the same palette the items use in play —
+             never a per-item rainbow. Shapes are untouched. */
+          var cellCc = shopTh.accent;
+          if (shopTab === 'arrows') icon = arrowSVG(it, shopTh.arrow);
+          else if (shopTab === 'trails') icon = trailSVG(it.id, shopTh.trail);
           else if (shopTab === 'themes') icon = '<div class="swatch" style="background:' + themeSwatch(it) + '"></div>';
-          else icon = '<div class="swatch" style="background:' + swatchBG(it) + '"></div>';
+          else { icon = '<div class="swatch" style="background:' + swatchBG(it) + '"></div>'; cellCc = it.hex; }
+          /* Locked and on-trial items get the full unlock card
+             (two buttons / TRIAL tag); owned items keep the
+             simple tap-to-equip cell. */
+          if (shopTab !== 'themes' && !isOwned(shopTab, i) && (isTrialItem(shopTab, i) || it.price > 0)) {
+            html += itemCardHtml(i, it, icon, cellCc);
+            continue;
+          }
           var priceHtml;
           if (eq[shopTab] === i) priceHtml = '<span class="price ownedTxt">EQUIPPED</span>';
           else if (isOwned(shopTab, i)) priceHtml = '<span class="price ownedTxt">OWNED</span>';
@@ -3636,13 +5170,22 @@
           var star = it.price >= PREMIUM_FROM[shopTab]
             ? '<span class="starBadge"><svg viewBox="0 0 22 22"><polygon points="0,0 22,0 22,22" fill="#ffffff"/></svg><i>★</i></span>' : '';
           var nameHtml = shopTab === 'themes' ? '<span class="themeName">' + it.name + '</span>' : '';
-          html += '<button class="' + cls + '" data-i="' + i + '" style="--cc:' + THEMES[i % THEMES.length].accent + '" aria-label="' + it.name + '">' + star +
+          html += '<button class="' + cls + '" data-i="' + i + '" style="--cc:' + cellCc + '" aria-label="' + it.name + '">' + star +
             '<span class="cellIcon">' + icon + '</span>' + nameHtml + priceHtml + '</button>';
         }
         shopGridEl.innerHTML = html;
         var cells = shopGridEl.querySelectorAll('.shopCell');
         for (var j = 0; j < cells.length; j++) {
-          cells[j].addEventListener('click', function () { onItemClick(parseInt(this.getAttribute('data-i'), 10)); });
+          cells[j].addEventListener('click', function (e) {
+            var actBtn = e.target && e.target.closest ? e.target.closest('[data-act]') : null;
+            if (actBtn) {
+              var ai = parseInt(actBtn.getAttribute('data-i'), 10);
+              if (shopTab === 'themes') onThemeAction(actBtn.getAttribute('data-act'), ai);
+              else onItemAction(actBtn.getAttribute('data-act'), ai);
+              return;
+            }
+            onItemClick(parseInt(this.getAttribute('data-i'), 10));
+          });
         }
       }
 
@@ -3666,6 +5209,8 @@
           var selTh = THEME_ITEMS[selItem.themes];
           if (selTh && selTh.th >= 0) bgTh = THEMES[selTh.th];
         }
+        shopTh = bgTh;
+        shopGridEl.classList.toggle('themesGrid', shopTab === 'themes');
         shopEl.style.background = shopBg(bgTh);
         applyThemeCSS(bgTh);
         var tabs = document.querySelectorAll('.shopTab');
@@ -3676,25 +5221,123 @@
         renderGrid();
       }
 
+      /* The two unlock routes on a locked theme pack card.
+         "buy": pay the gem price ONCE — the unlock is permanent
+         and saved with the shop state. Not enough gems: say so
+         plainly and deduct nothing. "trial": watch the ad
+         — the theme unlocks for this session only, is equipped
+         at once, and locks again the moment a run ends in
+         death (see die()). */
+      function onThemeAction(act, i) {
+        var it = THEME_ITEMS[i];
+        if (!it || it.th < 0) return;
+        selItem.themes = i;
+        if (act === 'buy') {
+          if (gems >= it.price) {
+            gems -= it.price;
+            owned.themes[i] = true;
+            if (it.custom && it.cid) ownedCustomCids[it.cid] = true;
+            eq.themes = i;
+            saveShop(); updateGemUI();
+            tone(880, 0.09, 'square', 0.06); tone(1318, 0.14, 'square', 0.05, 0, 0.08);
+            toast('UNLOCKED FOREVER: ' + it.name, 1300, '#ffe93c');
+            syncMusicToTheme();   // the bought theme is equipped — its track takes over
+          } else {
+            tone(150, 0.16, 'sawtooth', 0.07);
+            toast('NOT ENOUGH GEMS — ' + it.name + ' needs ' + fmtPrice(it.price) + ', you have ' + gems, 1600, '#ff9a8a');
+          }
+          renderShop();
+        } else if (act === 'trial') {
+          tone(660, 0.06, 'square', 0.05);
+          showAd(function (ok) {
+            if (ok) {
+              trialTheme = it.th;
+              eq.themes = i;
+              saveShop();
+              tone(880, 0.09, 'square', 0.06); tone(1318, 0.14, 'square', 0.05, 0, 0.08);
+              toast('TRIAL ACTIVE: ' + it.name + ' — UNTIL YOU DIE', 1500, '#ffd23e');
+              syncMusicToTheme();   // the trial theme is equipped — play its own track
+            } else {
+              toast('AD CANCELLED — NO TRIAL', 1100, '#ff9a8a');
+            }
+            renderShop();
+          });
+        }
+      }
+
+      /* The two unlock routes on a locked ITEM card (Arrows /
+         Trails / Colours) — the theme-pack system, unchanged:
+         "buy" pays the item's existing gem price ONCE and the
+         unlock is permanent and saved; "trial" plays the same
+         labelled ad and unlocks the item for this session
+         only — it is equipped at once, costs NO gems, and locks
+         again the moment a run ends in death (see die()). */
+      function onItemAction(act, i) {
+        var tab = shopTab;
+        var it = TAB_ITEMS[tab][i];
+        if (!it) return;
+        selItem[tab] = i;
+        if (act === 'buy') {
+          if (gems >= it.price) {
+            gems -= it.price;
+            owned[tab][i] = true;
+            if (it.custom && it.cid) ownedCustomCids[it.cid] = true;
+            if (trialItems[tab] === i) trialItems[tab] = -1;
+            eq[tab] = i;
+            saveShop(); updateGemUI();
+            tone(880, 0.09, 'square', 0.06); tone(1318, 0.14, 'square', 0.05, 0, 0.08);
+            toast('UNLOCKED FOREVER: ' + it.name, 1300, '#ffe93c');
+          } else {
+            tone(150, 0.16, 'sawtooth', 0.07);
+            toast('NOT ENOUGH GEMS — ' + it.name + ' needs ' + fmtPrice(it.price) + ', you have ' + gems, 1600, '#ff9a8a');
+          }
+          renderShop();
+        } else if (act === 'trial') {
+          tone(660, 0.06, 'square', 0.05);
+          showAd(function (ok) {
+            if (ok) {
+              trialItems[tab] = i;
+              eq[tab] = i;
+              saveShop();
+              tone(880, 0.09, 'square', 0.06); tone(1318, 0.14, 'square', 0.05, 0, 0.08);
+              toast('TRIAL ACTIVE: ' + it.name + ' — UNTIL YOU DIE', 1500, '#ffd23e');
+            } else {
+              toast('AD CANCELLED — NO TRIAL', 1100, '#ff9a8a');
+            }
+            renderShop();
+          });
+        }
+      }
+
       function onItemClick(i) {
         selItem[shopTab] = i;
         var it = TAB_ITEMS[shopTab][i];
-        if (isOwned(shopTab, i)) {
-          eq[shopTab] = i;
-          saveShop();
-          tone(740, 0.06, 'square', 0.05);
-          toast('EQUIPPED: ' + it.name.toUpperCase(), 900);
-        } else if (gems >= it.price) {
-          gems -= it.price;
-          owned[shopTab][i] = true;
-          eq[shopTab] = i;
-          saveShop(); updateGemUI();
-          tone(880, 0.09, 'square', 0.06); tone(1318, 0.14, 'square', 0.05, 0, 0.08);
-          toast('UNLOCKED: ' + it.name.toUpperCase(), 1100, '#ffe93c');
-        } else {
-          tone(150, 0.16, 'sawtooth', 0.07);
-          toast('NOT ENOUGH GEMS', 1200, '#ff9a8a');
+        if (!isUsable(shopTab, i)) {
+          /* A free item (price 0, e.g. the Volt Bolt arrow) is
+             claimed by the tap itself — no buttons needed. */
+          if (it.price === 0 && !(shopTab === 'themes' && it.th >= 0)) {
+            owned[shopTab][i] = true;
+            eq[shopTab] = i;
+            saveShop();
+            tone(740, 0.06, 'square', 0.05);
+            toast('EQUIPPED: ' + it.name.toUpperCase(), 900);
+            if (shopTab === 'themes') syncMusicToTheme();
+            renderShop();
+            return;
+          }
+          /* A locked item never buys on a plain tap — tapping
+             only selects and previews it. Unlocking is the two
+             explicit buttons on its card (gems forever, or a
+             free ad trial), in every tab including Themes. */
+          tone(520, 0.06, 'square', 0.05);
+          renderShop();
+          return;
         }
+        eq[shopTab] = i;
+        saveShop();
+        tone(740, 0.06, 'square', 0.05);
+        toast('EQUIPPED: ' + it.name.toUpperCase(), 900);
+        if (shopTab === 'themes') syncMusicToTheme();   // an equipped theme brings its track with it
         renderShop();
       }
 
@@ -3711,6 +5354,7 @@
         shopEl.classList.add('hidden');
         menuEl.classList.remove('hidden');
         lastCssTheme = -999;   // let the canvas re-apply the menu theme
+        syncMusicToTheme();    // back in the menu, the music follows the equipped theme
       }
 
       document.getElementById('shopBtn').addEventListener('click', function () { tone(660, 0.07, 'square', 0.05); openShop(); });
@@ -4174,6 +5818,7 @@
             }
             var wasOwned = isOwned(gift.tab, gift.index);
             owned[gift.tab][gift.index] = true;
+            if (gift.item.custom && gift.item.cid) ownedCustomCids[gift.item.cid] = true;
             eq[gift.tab] = gift.index;
             selItem[gift.tab] = gift.index;
             lastGiftTab = gift.tab;
@@ -4221,9 +5866,9 @@
         tone(660, 0.06, 'square', 0.05);
       });
 
-      /* ---------------- Server sync: catalog, settings, analytics ----------------
+      /* ---------------- Server sync: catalog, settings, ads, items, analytics ----------------
          On load the game asks the GIFT WORKER (CONFIG.GIFT_WORKER_URL)
-         for two things, in the background — the menu and gameplay
+         for four things, in the background — the menu and gameplay
          NEVER wait for these answers:
 
            GET /catalog  — per-tab item overrides { index, name,
@@ -4236,6 +5881,8 @@
            GET /settings — { gemRewardPerLevel,
                            gemRewardEndlessPer500m,
                            freeGemsPerHour, packPrices[5] }.
+           GET /items    — custom uploaded items, merged into
+                           the shop (see applyServerItems).
 
          Both answers may be the payload itself or wrapped
          ({ catalog: {...} } / { settings: {...} }). Any failure —
@@ -4325,6 +5972,261 @@
         if (!gemStoreEl.classList.contains('hidden')) renderPacks();
         if (!shopEl.classList.contains('hidden')) renderShop();
       }
+      /* ---------------- Hideable ad bars: social bar + in-game native ----------------
+         HIDING IS VISUAL ONLY: tapping a bar's × button only adds
+         a CSS class that collapses the bar out of sight. The
+         bar's container element AND the ad <script> element
+         injected into it STAY in the DOM, completely untouched,
+         so the ad keeps loading, serving and refreshing in the
+         background exactly as if it were still on screen.
+         Nothing here ever removes an ad element or a script
+         from the page.
+         The hidden/shown state lives in memory only — it is
+         never saved — so every page load starts with the bars
+         shown. The small floating SHOW ADS pill appears whenever
+         a bar is hidden and brings every hidden bar back. */
+      var socialBarEl = document.getElementById('socialBar');
+      var socialBarSlotEl = document.getElementById('socialBarSlot');
+      var gameNativeWrapEl = document.getElementById('gameNativeWrap');
+      var gameNativeBarEl = document.getElementById('gameNativeBar');
+      var gameNativeSlotEl = document.getElementById('gameNativeSlot');
+      var showAdsBtnEl = document.getElementById('showAdsBtn');
+      var nativeBarInRun = null;    // last in-run visibility synced to the native strip
+      var nativeHideArmed = false;  // the native strip's × has been armed (once)
+
+      function refreshShowAdsBtn() {
+        var socialGone = socialBarEl.classList.contains('barGone');
+        var nativeGone = gameNativeBarEl.classList.contains('barGone');
+        var anyGone = socialGone || nativeGone;
+        showAdsBtnEl.classList.toggle('hidden', !anyGone);
+        /* The pill floats bottom-right — but parked in the
+           corner it would cover the × of a bar that is
+           still showing (the × sits top-right of its bar,
+           ~14–46 px above the bottom edge), so after hiding
+           one bar the other could never be hidden: a tap
+           there would hit the pill instead and restore the
+           first bar. While any bar is still visible the
+           pill rides above the bars; once both are hidden
+           it drops back to the corner. */
+        showAdsBtnEl.classList.toggle('pillUp', anyGone && (!socialGone || !nativeGone));
+      }
+      function hideAdBar(barEl) {
+        barEl.classList.add('barGone');
+        refreshShowAdsBtn();
+      }
+      /* Ads SHOW FIRST on every load: a bar hidden with × in
+         one run must not stay hidden into the next run (or
+         back on the menu) with the SHOW ADS pill already
+         showing — each fresh run and each return to the menu
+         starts with both bars shown and no pill. Hiding still
+         lasts for the rest of the run it happened in, and it
+         is still visual only (see hideAdBar). The native
+         strip's × re-arms for the new run, fading in ~3 s
+         after the strip appears, exactly as on first load. */
+      function resetAdBars() {
+        socialBarEl.classList.remove('barGone');
+        gameNativeBarEl.classList.remove('barGone');
+        gameNativeBarEl.classList.remove('canHide');
+        refreshShowAdsBtn();
+        nativeHideArmed = true;
+        setTimeout(function () { gameNativeBarEl.classList.add('canHide'); }, 3000);
+      }
+      document.getElementById('socialBarHide').addEventListener('click', function () { hideAdBar(socialBarEl); });
+      document.getElementById('gameNativeHide').addEventListener('click', function () { hideAdBar(gameNativeBarEl); });
+      showAdsBtnEl.addEventListener('click', function () {
+        socialBarEl.classList.remove('barGone');
+        gameNativeBarEl.classList.remove('barGone');
+        refreshShowAdsBtn();
+      });
+      /* AdSense-style: the social bar's × fades in a few seconds
+         after the bar first appears — the bar is on screen from
+         page load, on the menu, in the shop and during a run. */
+      setTimeout(function () { socialBarEl.classList.add('canHide'); }, 3000);
+
+      /* The native strip rides along with a run: on screen while
+         the HUD is up (playing, paused, or the brief death
+         pause), gone again on the menu, the shop and the
+         game-over screens. Called every frame from the main
+         loop; it only touches the DOM when the in-run state
+         actually flips, and the first time the strip appears its
+         × arms a few seconds later, exactly like the social
+         bar's. */
+      function syncAdBars() {
+        var inRun = (state === 'playing' || state === 'paused' || state === 'dead');
+        if (inRun === nativeBarInRun) return;
+        nativeBarInRun = inRun;
+        gameNativeWrapEl.classList.toggle('hidden', !inRun);
+        if (inRun && !nativeHideArmed) {
+          nativeHideArmed = true;
+          setTimeout(function () { gameNativeBarEl.classList.add('canHide'); }, 3000);
+        }
+      }
+
+      /* ---------------- Server ads: GET /ads ----------------
+         The ad config the admin panel saves:
+           { adsEnabled, network ("adsterra" | "monetag"),
+             bannerCode, nativeCode, socialBarCode, directLink }
+         (the payload itself, or wrapped as { ads: {...} }).
+         Anything else — fetch failed, nothing saved, malformed,
+         adsEnabled not true — leaves AD_CONFIG in its default
+         "ads off" state: nothing is injected and no "watch ad"
+         button is shown, and the game plays exactly as before.
+         When ads ARE enabled: bannerCode goes into the menu's
+         banner slot, nativeCode into the shop's native slot AND
+         the in-game native strip, socialBarCode into the
+         on-screen social bar's slot at the bottom edge, and
+         directLink drives the watch-ad flow in showAd()
+         (empty link = the 10-second DEMO AD countdown only). */
+      function injectAdCode(el, code) {
+        if (!el || typeof code !== 'string' || !code.trim()) return;
+        el.innerHTML = code;
+        /* innerHTML never runs <script> tags inside a snippet,
+           and ad-network codes are mostly scripts — so re-create
+           each script element fresh (which does run it), keeping
+           its src, attributes and inline body. */
+        var scripts = el.querySelectorAll('script');
+        for (var i = 0; i < scripts.length; i++) {
+          var old = scripts[i];
+          var s = document.createElement('script');
+          for (var j = 0; j < old.attributes.length; j++) {
+            s.setAttribute(old.attributes[j].name, old.attributes[j].value);
+          }
+          if (old.textContent) s.textContent = old.textContent;
+          old.parentNode.replaceChild(s, old);
+        }
+      }
+      function injectSocialBar(code) {
+        if (typeof code !== 'string' || !code.trim()) return;
+        /* The code lands INSIDE the on-screen social bar's slot
+           (#socialBarSlot), not the page head: the bar, its slot
+           and the injected script form one unit that the player
+           can collapse visually — the elements themselves are
+           never removed, so the ad keeps running (see the
+           hideable ad bars note below). */
+        var tmp = document.createElement('div');
+        tmp.innerHTML = code;
+        var scripts = tmp.querySelectorAll('script');
+        if (scripts.length) {
+          for (var i = 0; i < scripts.length; i++) {
+            var old = scripts[i];
+            var s = document.createElement('script');
+            for (var j = 0; j < old.attributes.length; j++) {
+              s.setAttribute(old.attributes[j].name, old.attributes[j].value);
+            }
+            if (old.textContent) s.textContent = old.textContent;
+            socialBarSlotEl.appendChild(s);
+          }
+        } else if (/^https?:\/\//i.test(code.trim())) {
+          var only = document.createElement('script');
+          only.src = code.trim();
+          socialBarSlotEl.appendChild(only);
+        } else {
+          var inline = document.createElement('script');
+          inline.textContent = code;
+          socialBarSlotEl.appendChild(inline);
+        }
+      }
+      function applyServerAds(data) {
+        if (!data || typeof data !== 'object') return;   // fetch failed / nothing saved — ads stay off
+        var a = (data.ads && typeof data.ads === 'object') ? data.ads : data;
+        if (a.adsEnabled !== true) return;               // ads off — nothing injected, no watch-ad buttons
+        AD_CONFIG.enabled = true;
+        AD_CONFIG.network = (typeof a.network === 'string') ? a.network : '';
+        AD_CONFIG.directLink = (typeof a.directLink === 'string') ? a.directLink : '';
+        injectAdCode(document.getElementById('menuBannerSlot'), a.bannerCode);
+        injectAdCode(document.getElementById('shopNativeSlot'), a.nativeCode);
+        injectAdCode(gameNativeSlotEl, a.nativeCode);
+        injectSocialBar(a.socialBarCode);
+        /* Trial buttons appear if the shop is already open; the
+           revive button reads adsEnabled() when the death screen
+           is built, so it follows automatically. */
+        if (!shopEl.classList.contains('hidden')) renderShop();
+      }
+      /* ---------------- Server custom items: GET /items ----------------
+         The admin panel can upload CUSTOM items: records of
+         { id, name, tab, unlock, price, image, colors? } where
+         tab is "arrows" | "trails" | "colors" | "themes"
+         ("colours" is accepted too), unlock is "free" | "paid" |
+         "ads", price is the gem price for "paid" items, image is
+         a base64 data URL, and colors (themes only) may carry
+         { primary, spike, saw } hex colours for the palette.
+         Valid records are APPENDED to the matching shop list,
+         after the built-ins, and from then on they behave like
+         built-in items — same cards, same unlock handlers, same
+         death/trial rules, and the same catalog visibility
+         (SERVER_HIDDEN is index-based, so a catalog entry can
+         hide a custom item by its merged index too).
+         What each custom item DOES in play:
+           arrows — the uploaded image is the arrow sprite
+                    (drawn with drawImage in drawPlayer).
+           trails — the image is stamped along the trail
+                    (drawTrail).
+           colors — the image paints the arrow as a pattern
+                    fill (playerFill).
+           themes — the image is the theme's shop card / preview
+                    picture, and a palette built from its colors
+                    (sensible defaults from Theme 1 when none
+                    were given) is appended to THEMES for its
+                    corridor walls, spikes and saws; the Endless
+                    cycle and the death-restart pick still rotate
+                    through the twelve built-in themes only.
+         "free" items are owned the moment they arrive; ownership
+         of bought custom items is also remembered by server id
+         (ownedCustomCids), so it survives the item list changing
+         between sessions. Any failure — server unreachable,
+         nothing saved, malformed records — is ignored silently
+         and the shop keeps the built-in items only. */
+      var appliedCustomIds = {};
+      function okHexColor(v) { return (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v)) ? v : null; }
+      function makeCustomTheme(rec, name) {
+        var base = THEMES[0], th = {}, k;
+        for (k in base) th[k] = base[k];
+        delete th._lat;   // never inherit Theme 1's cached lattice — it is rebuilt from this palette
+        th.name = name.toUpperCase();
+        th.custom = true;
+        var cols = (rec.colors && typeof rec.colors === 'object') ? rec.colors : {};
+        var pri = okHexColor(cols.primary), spk = okHexColor(cols.spike), saw = okHexColor(cols.saw);
+        if (pri) { th.tun = pri; th.edge = pri; th.glow = pri; th.accent = pri; th.arrow = pri; th.trail = pri; }
+        if (spk) { th.spike = spk; th.spike2 = spk; }
+        if (saw) th.saw = saw;
+        THEMES.push(th);
+        return THEMES.length - 1;
+      }
+      function applyServerItems(data) {
+        if (!data || typeof data !== 'object') return;
+        var list = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : null);
+        if (!list) return;
+        var changed = false;
+        list.forEach(function (rec) {
+          if (!rec || typeof rec !== 'object') return;
+          var tab = String(rec.tab || '').toLowerCase();
+          if (tab === 'colours') tab = 'colors';
+          if (!TAB_ITEMS[tab]) return;
+          if (typeof rec.name !== 'string' || !rec.name.trim()) return;
+          if (typeof rec.image !== 'string' || rec.image.indexOf('data:image/') !== 0) return;
+          var cid = (rec.id != null && rec.id !== '') ? String(rec.id) : ('name:' + tab + ':' + rec.name.trim().toLowerCase());
+          if (appliedCustomIds[cid]) return;
+          appliedCustomIds[cid] = true;
+          var unlock = (rec.unlock === 'paid' || rec.unlock === 'ads') ? rec.unlock : 'free';
+          var price = Number(rec.price);
+          price = (isFinite(price) && price > 0) ? Math.floor(price) : 0;
+          if (unlock === 'free') price = 0;
+          var name = rec.name.trim();
+          var it = { name: name, price: price, custom: true, cid: cid, img: rec.image, unlock: unlock };
+          if (tab === 'arrows') it.mode = 'image';
+          else if (tab === 'trails') it.id = 'ribbon';
+          else if (tab === 'colors') { it.id = 'custom-' + cid; it.type = 'solid'; it.hex = '#ffffff'; }
+          else if (tab === 'themes') it.th = makeCustomTheme(rec, name);
+          TAB_ITEMS[tab].push(it);
+          var idx = TAB_ITEMS[tab].length - 1;
+          if (unlock === 'free' || ownedCustomCids[cid]) owned[tab][idx] = true;
+          changed = true;
+        });
+        if (changed) {
+          saveShop();
+          if (!shopEl.classList.contains('hidden')) renderShop();
+        }
+      }
       function sendAnalyticsPing() {
         var base = giftWorkerUrl();
         if (!base) return;
@@ -4347,6 +6249,8 @@
       }, 60000);
       fetchServerJson('/catalog').then(applyServerCatalog);
       fetchServerJson('/settings').then(applyServerSettings);
+      fetchServerJson('/ads').then(applyServerAds);
+      fetchServerJson('/items').then(applyServerItems);
 
       window.addEventListener('keydown', function (e) {
         if (e.code !== 'Escape') return;
@@ -4410,12 +6314,6 @@
 
       document.getElementById('playBtn').addEventListener('click', function () { tryLockLandscape(); startRun(Math.min(unlocked, LEVELS.length - 1), 'classic'); });
       document.getElementById('endlessBtn').addEventListener('click', function () { tryLockLandscape(); startRun(0, 'endless'); });
-      document.getElementById('practiceBtn').addEventListener('click', function () {
-        practice = !practice;
-        this.classList.toggle('on', practice);
-        document.getElementById('practicePill').textContent = practice ? 'ON' : 'OFF';
-        tone(practice ? 880 : 440, 0.07, 'square', 0.05);
-      });
       document.getElementById('pauseBtn').addEventListener('click', function () { if (state === 'playing') pauseGame(); });
       document.getElementById('menuBtn').addEventListener('click', showMenu);
       /* One sound switch, two buttons — the main-menu toggle and
@@ -4438,8 +6336,8 @@
         muted = !muted;
         saveSoundPref();
         applySoundUI();
-        if (muted) stopMusic();
-        else { startMusic(); tone(880, 0.07, 'square', 0.05); }
+        if (muted) muteMusic();
+        else { resumeMusic(); tone(880, 0.07, 'square', 0.05); }
       }
       document.getElementById('soundBtn').addEventListener('click', toggleMute);
       document.getElementById('menuSoundBtn').addEventListener('click', toggleMute);
