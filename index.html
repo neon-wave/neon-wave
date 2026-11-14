@@ -183,11 +183,7 @@
         font-size: clamp(38px, 9vw, 64px);
         letter-spacing: .04em;
         margin: 0;
-        /* Solid pink/magenta: the PLAY button's own left-edge
-           colour (--th-a, the first stop of its gradient), so
-           the title always matches the button in every theme.
-           In the default theme that is #ff007f hot pink. */
-        background: var(--th-a);
+        background: linear-gradient(94deg, var(--th-a), var(--th-b), var(--th-c));
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
@@ -863,12 +859,7 @@
         border: 1.5px solid rgba(var(--th-b-rgb), .85); border-radius: 999px;
         padding: 6px 14px; min-height: 32px; cursor: pointer;
         box-shadow: 0 6px 18px rgba(0, 0, 0, .5), 0 0 12px rgba(var(--th-b-rgb), .35);
-        transition: bottom .3s ease;
       }
-      /* While any bar is still showing, the pill rides above
-         the bars (see refreshShowAdsBtn): parked in the
-         corner it would cover the remaining bar's × button. */
-      #showAdsBtn.pillUp { bottom: 60px; }
       /* Custom (server-uploaded) shop items show their image. */
       .shopCell .cellIcon img.customImg { width: 64px; height: 46px; object-fit: contain; border-radius: 8px; }
       #previewBox img.customImg { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
@@ -1575,134 +1566,97 @@
              bar's chord root;
            bass — 8 eighth-steps (1 = hit, 0 = rest);
              bassOctStep = the one step per bar where the bass
-             jumps an octave (-1 = never); bassWave / bassVol /
-             bassDur (note length: short = punchy, long =
-             smooth);
+             jumps an octave (-1 = never); bassWave / bassVol;
            lead — 8 eighth-steps of melody offsets, in scale
              degrees from the bar's chord root, played two
-             octaves up (-1 = rest); leadWave / leadVol /
-             leadDur (short = plucky, long = singing);
-           kick / snare / hat — 8 eighth-steps each (1/0),
-             each with its own volume (kickVol / snareVol /
-             hatVol) so the drums hit differently per track;
-           arp — 8 eighth-steps of arpeggio offsets (-1 =
-             rest), played as short off-16th notes between
-             the eighth steps (arpWave / arpVol); null = no
-             arpeggio, so some tracks drive with a 16th-note
-             arp and others breathe without one;
-           swing — off-8th notes land late by this fraction
-             of a step (0 = straight, ~0.14 = swung groove);
-           pad / padVol / padWave — a soft chord swell on
-             step 0 of every bar (false = no pad at all, so
-             dry tracks stay dry).
-         The tracks differ in INSTRUMENT, not just tempo:
-         square bass vs sine bass vs saw bass, plucky short
-         leads vs long singing leads, four-on-the-floor vs
-         half-time vs syncopated drums, arpeggio vs none,
-         straight vs swung, pad vs dry — so no two tracks
-         sound alike. The mix is LOUD now (kick ~0.34,
-         snare ~0.16, bass ~0.11, lead ~0.07, pad ~0.05)
-         and the music bus runs through a gentle
-         compressor, so the summed peaks stay punchy
-         without clipping. Every music note runs through
-         the single musicBus gain node, so a track switch
-         can fade the whole bus; SFX (tone / noiseBurst)
-         bypass the bus and go straight to the destination,
-         unchanged. */
+             octaves up (-1 = rest); leadWave / leadVol;
+           kick / snare / hat — 8 eighth-steps each (1/0);
+           pad / padVol — a soft chord swell on step 0 of
+             every bar.
+         The mix keeps the old single loop's balance: kick
+         0.15, snare 0.05, bass ~0.042, lead ~0.026, pad
+         ~0.018. Every music note runs through the single
+         musicBus gain node, so a track switch can fade the
+         whole bus; SFX (tone / noiseBurst) bypass the bus
+         and go straight to the destination, unchanged. */
       var SC_MINOR = [0, 2, 3, 5, 7, 8, 10];
       var SC_MAJOR = [0, 2, 4, 5, 7, 9, 11];
       var SC_PHRYGIAN = [0, 1, 3, 5, 7, 8, 10];
       var SC_HARMMIN = [0, 2, 3, 5, 7, 8, 11];
       var SC_MAJPENT = [0, 2, 4, 7, 9];
-      var SC_DORIAN = [0, 2, 3, 5, 7, 9, 10];
-      var SC_MIXO = [0, 2, 4, 5, 7, 9, 10];
-      var SC_MINPENT = [0, 3, 5, 7, 10];
-      var SC_BLUES = [0, 3, 5, 6, 7, 10];
       var MUSIC_TRACKS = [
-        // 1 · NEON BOSS BATTLE — bold and dramatic, A minor, saw lead, four-on-the-floor + driving 16th arp
+        // 1 · NEON BOSS BATTLE — bold and dramatic, A minor, saw lead, four-on-the-floor
         { name: 'BOSS DRIVE', bpm: 150, root: 33, scale: SC_MINOR, chords: [0, 5, 2, 6],
-          bass: [1, 0, 1, 0, 1, 0, 1, 0], bassOctStep: 4, bassWave: 'square', bassVol: 0.11, bassDur: 0.16,
-          lead: [0, 2, 4, 2, 7, 4, 2, 4], leadWave: 'sawtooth', leadVol: 0.075, leadDur: 0.14,
-          arp: [7, 4, 7, 9, 7, 4, 9, 7], arpWave: 'sawtooth', arpVol: 0.04, swing: 0,
-          kick: [1, 0, 1, 0, 1, 0, 1, 0], kickVol: 0.36, snare: [0, 0, 1, 0, 0, 0, 1, 0], snareVol: 0.16, hat: [0, 1, 0, 1, 0, 1, 0, 1], hatVol: 0.05,
-          pad: true, padVol: 0.04, padWave: 'triangle' },
-        // 2 · SYNTHWAVE SUNSET — dreamy synthwave, C major, long sine bass + singing triangle lead, half-time, lush pad, gentle swing
+          bass: [1, 0, 1, 0, 1, 0, 1, 0], bassOctStep: 4, bassWave: 'square', bassVol: 0.042,
+          lead: [0, 2, 4, 2, 7, 4, 2, 4], leadWave: 'sawtooth', leadVol: 0.026,
+          kick: [1, 0, 1, 0, 1, 0, 1, 0], snare: [0, 0, 1, 0, 0, 0, 1, 0], hat: [0, 1, 0, 1, 0, 1, 0, 1],
+          pad: true, padVol: 0.018 },
+        // 2 · SYNTHWAVE SUNSET — dreamy synthwave, C major, triangle lead, half-time kick, lush pad
         { name: 'SUNSET CRUISE', bpm: 104, root: 36, scale: SC_MAJOR, chords: [0, 4, 5, 3],
-          bass: [1, 0, 0, 0, 0, 0, 1, 0], bassOctStep: -1, bassWave: 'sine', bassVol: 0.11, bassDur: 0.5,
-          lead: [4, 2, 0, 2, -1, 2, 4, -1], leadWave: 'triangle', leadVol: 0.07, leadDur: 0.5,
-          arp: null, swing: 0.1,
-          kick: [1, 0, 0, 0, 0, 0, 0, 0], kickVol: 0.3, snare: [0, 0, 0, 0, 1, 0, 0, 0], snareVol: 0.13, hat: [0, 0, 1, 0, 0, 0, 1, 0], hatVol: 0.04,
-          pad: true, padVol: 0.055, padWave: 'triangle' },
-        // 3 · LASER TEAL-PINK — sleek and fast, E minor, staccato square lead, hats on every eighth + 16th arp
+          bass: [1, 0, 0, 0, 0, 0, 1, 0], bassOctStep: -1, bassWave: 'triangle', bassVol: 0.04,
+          lead: [4, 2, 0, 2, -1, 2, 4, -1], leadWave: 'triangle', leadVol: 0.026,
+          kick: [1, 0, 0, 0, 0, 0, 0, 0], snare: [0, 0, 0, 0, 1, 0, 0, 0], hat: [0, 0, 1, 0, 0, 0, 1, 0],
+          pad: true, padVol: 0.024 },
+        // 3 · LASER TEAL-PINK — sleek and fast, E minor, hats on every eighth
         { name: 'LASER RUSH', bpm: 148, root: 40, scale: SC_MINOR, chords: [0, 3, 5, 4],
-          bass: [1, 1, 0, 1, 1, 0, 1, 0], bassOctStep: 6, bassWave: 'sawtooth', bassVol: 0.10, bassDur: 0.13,
-          lead: [7, 4, 2, 4, 7, 9, 7, 4], leadWave: 'square', leadVol: 0.07, leadDur: 0.09,
-          arp: [7, 9, 7, 4, 7, 9, 4, 7], arpWave: 'square', arpVol: 0.045, swing: 0,
-          kick: [1, 0, 1, 0, 1, 0, 1, 0], kickVol: 0.34, snare: [0, 0, 1, 0, 0, 0, 1, 0], snareVol: 0.16, hat: [1, 1, 1, 1, 1, 1, 1, 1], hatVol: 0.05,
-          pad: true, padVol: 0.03, padWave: 'triangle' },
-        // 4 · TOXIC LIME — punchy and edgy, F# phrygian, syncopated kick + bass, plucky square lead
+          bass: [1, 1, 0, 1, 1, 0, 1, 0], bassOctStep: 6, bassWave: 'square', bassVol: 0.042,
+          lead: [7, 4, 2, 4, 7, 9, 7, 4], leadWave: 'square', leadVol: 0.024,
+          kick: [1, 0, 1, 0, 1, 0, 1, 0], snare: [0, 0, 1, 0, 0, 0, 1, 0], hat: [1, 1, 1, 1, 1, 1, 1, 1],
+          pad: true, padVol: 0.012 },
+        // 4 · TOXIC LIME — punchy and edgy, F# phrygian, syncopated kick + bass
         { name: 'TOXIC PULSE', bpm: 138, root: 30, scale: SC_PHRYGIAN, chords: [0, 0, 1, 3],
-          bass: [1, 0, 1, 1, 0, 1, 0, 1], bassOctStep: 3, bassWave: 'sawtooth', bassVol: 0.11, bassDur: 0.15,
-          lead: [0, 1, 0, 3, -1, 3, 1, 0], leadWave: 'square', leadVol: 0.07, leadDur: 0.09,
-          arp: null, swing: 0,
-          kick: [1, 0, 0, 1, 0, 0, 1, 0], kickVol: 0.36, snare: [0, 0, 1, 0, 0, 0, 1, 0], snareVol: 0.16, hat: [0, 1, 0, 1, 0, 1, 0, 1], hatVol: 0.05,
-          pad: true, padVol: 0.035, padWave: 'triangle' },
-        // 5 · ARCADE AFTERGLOW — warm and groovy, G major, swung triangle groove, soft pad
+          bass: [1, 0, 1, 1, 0, 1, 0, 1], bassOctStep: 3, bassWave: 'sawtooth', bassVol: 0.04,
+          lead: [0, 1, 0, 3, -1, 3, 1, 0], leadWave: 'sawtooth', leadVol: 0.024,
+          kick: [1, 0, 0, 1, 0, 0, 1, 0], snare: [0, 0, 1, 0, 0, 0, 1, 0], hat: [0, 1, 0, 1, 0, 1, 0, 1],
+          pad: true, padVol: 0.014 },
+        // 5 · ARCADE AFTERGLOW — warm and groovy, G major, triangle
         { name: 'AFTERGLOW GROOVE', bpm: 118, root: 43, scale: SC_MAJOR, chords: [0, 3, 4, 5],
-          bass: [1, 0, 0, 1, 0, 1, 0, 0], bassOctStep: -1, bassWave: 'triangle', bassVol: 0.11, bassDur: 0.22,
-          lead: [2, 4, 7, 4, 9, 7, 4, 2], leadWave: 'triangle', leadVol: 0.07, leadDur: 0.2,
-          arp: null, swing: 0.14,
-          kick: [1, 0, 0, 1, 1, 0, 0, 0], kickVol: 0.32, snare: [0, 0, 1, 0, 0, 0, 1, 0], snareVol: 0.15, hat: [0, 1, 0, 1, 0, 1, 0, 1], hatVol: 0.045,
-          pad: true, padVol: 0.045, padWave: 'triangle' },
-        // 6 · BUBBLEGUM ARCADE — bright and bouncy, C major pentatonic, octave-hop bass, very plucky lead, NO pad (dry and playful)
+          bass: [1, 0, 0, 1, 0, 1, 0, 0], bassOctStep: -1, bassWave: 'triangle', bassVol: 0.042,
+          lead: [2, 4, 7, 4, 9, 7, 4, 2], leadWave: 'triangle', leadVol: 0.026,
+          kick: [1, 0, 0, 1, 1, 0, 0, 0], snare: [0, 0, 1, 0, 0, 0, 1, 0], hat: [0, 1, 0, 1, 0, 1, 0, 1],
+          pad: true, padVol: 0.018 },
+        // 6 · BUBBLEGUM ARCADE — bright and bouncy, C major pentatonic, octave-hop bass
         { name: 'BUBBLE POP', bpm: 132, root: 36, scale: SC_MAJPENT, chords: [0, 3, 4, 1],
-          bass: [1, 0, 1, 0, 1, 0, 1, 0], bassOctStep: 4, bassWave: 'square', bassVol: 0.11, bassDur: 0.12,
-          lead: [5, 2, 0, 2, 5, 4, 2, 0], leadWave: 'square', leadVol: 0.075, leadDur: 0.08,
-          arp: [2, 4, 2, 5, 2, 4, 5, 4], arpWave: 'triangle', arpVol: 0.04, swing: 0,
-          kick: [1, 0, 1, 0, 1, 0, 1, 0], kickVol: 0.34, snare: [0, 0, 1, 0, 0, 0, 1, 0], snareVol: 0.16, hat: [0, 1, 0, 1, 0, 1, 0, 1], hatVol: 0.05,
-          pad: false, padVol: 0 },
-        // 7 · NOIR PIXEL RACER — dark and driving, D harmonic minor, bass on every eighth, long saw lead, minimal pad
+          bass: [1, 0, 1, 0, 1, 0, 1, 0], bassOctStep: 4, bassWave: 'square', bassVol: 0.042,
+          lead: [5, 2, 0, 2, 5, 4, 2, 0], leadWave: 'square', leadVol: 0.024,
+          kick: [1, 0, 1, 0, 1, 0, 1, 0], snare: [0, 0, 1, 0, 0, 0, 1, 0], hat: [0, 1, 0, 1, 0, 1, 0, 1],
+          pad: true, padVol: 0.014 },
+        // 7 · NOIR PIXEL RACER — dark and driving, D harmonic minor, bass on every eighth
         { name: 'MIDNIGHT DRIVE', bpm: 128, root: 38, scale: SC_HARMMIN, chords: [0, 5, 3, 4],
-          bass: [1, 1, 1, 1, 1, 1, 1, 1], bassOctStep: 7, bassWave: 'square', bassVol: 0.10, bassDur: 0.14,
-          lead: [0, 2, 3, 2, 6, 3, 2, 0], leadWave: 'sawtooth', leadVol: 0.07, leadDur: 0.3,
-          arp: null, swing: 0,
-          kick: [1, 0, 1, 0, 1, 0, 1, 0], kickVol: 0.36, snare: [0, 0, 1, 0, 0, 0, 1, 0], snareVol: 0.16, hat: [0, 1, 0, 1, 0, 1, 0, 1], hatVol: 0.045,
-          pad: true, padVol: 0.03, padWave: 'triangle' },
-        // 8 · GLITCH CITY NIGHTS — glitchy and syncopated, irregular kick, stutter lead with rests, sparse sine blips, NO pad (dry)
+          bass: [1, 1, 1, 1, 1, 1, 1, 1], bassOctStep: 7, bassWave: 'square', bassVol: 0.04,
+          lead: [0, 2, 3, 2, 6, 3, 2, 0], leadWave: 'sawtooth', leadVol: 0.022,
+          kick: [1, 0, 1, 0, 1, 0, 1, 0], snare: [0, 0, 1, 0, 0, 0, 1, 0], hat: [0, 1, 0, 1, 0, 1, 0, 1],
+          pad: true, padVol: 0.016 },
+        // 8 · GLITCH CITY NIGHTS — glitchy and syncopated, irregular kick, stutter lead with rests
         { name: 'GLITCH STATIC', bpm: 140, root: 40, scale: SC_PHRYGIAN, chords: [0, 1, 0, 4],
-          bass: [1, 0, 1, 0, 0, 1, 1, 0], bassOctStep: 5, bassWave: 'square', bassVol: 0.11, bassDur: 0.11,
-          lead: [4, -1, 4, 4, -1, 2, -1, 7], leadWave: 'square', leadVol: 0.075, leadDur: 0.08,
-          arp: [7, -1, 2, -1, 7, -1, 4, -1], arpWave: 'sine', arpVol: 0.05, swing: 0,
-          kick: [1, 0, 0, 1, 0, 1, 0, 0], kickVol: 0.36, snare: [0, 0, 0, 1, 0, 0, 1, 0], snareVol: 0.17, hat: [1, 0, 1, 0, 0, 1, 0, 1], hatVol: 0.05,
+          bass: [1, 0, 1, 0, 0, 1, 1, 0], bassOctStep: 5, bassWave: 'square', bassVol: 0.04,
+          lead: [4, -1, 4, 4, -1, 2, -1, 7], leadWave: 'square', leadVol: 0.024,
+          kick: [1, 0, 0, 1, 0, 1, 0, 0], snare: [0, 0, 0, 1, 0, 0, 1, 0], hat: [1, 0, 1, 0, 0, 1, 0, 1],
           pad: false, padVol: 0 },
-        // 9 · FIRE LAVA — fast and intense, A phrygian, relentless kick + bass, saw everywhere + 16th arp
+        // 9 · FIRE LAVA — fast and intense, A phrygian, relentless kick + bass
         { name: 'LAVA RUSH', bpm: 168, root: 33, scale: SC_PHRYGIAN, chords: [0, 1, 0, 6],
-          bass: [1, 1, 1, 1, 1, 1, 1, 1], bassOctStep: 4, bassWave: 'sawtooth', bassVol: 0.11, bassDur: 0.12,
-          lead: [4, 3, 1, 3, 4, 6, 4, 3], leadWave: 'sawtooth', leadVol: 0.075, leadDur: 0.12,
-          arp: [6, 4, 6, 3, 6, 4, 3, 6], arpWave: 'square', arpVol: 0.04, swing: 0,
-          kick: [1, 0, 1, 0, 1, 0, 1, 0], kickVol: 0.38, snare: [0, 0, 1, 0, 0, 0, 1, 0], snareVol: 0.17, hat: [1, 1, 1, 1, 1, 1, 1, 1], hatVol: 0.055,
-          pad: true, padVol: 0.03, padWave: 'triangle' },
-        // 10 · OCEAN ICE — slow and calm, F major, sparse and minimal: one kick a bar, no snare, long sine pad + singing sine lead
+          bass: [1, 1, 1, 1, 1, 1, 1, 1], bassOctStep: 4, bassWave: 'sawtooth', bassVol: 0.042,
+          lead: [4, 3, 1, 3, 4, 6, 4, 3], leadWave: 'sawtooth', leadVol: 0.026,
+          kick: [1, 0, 1, 0, 1, 0, 1, 0], snare: [0, 0, 1, 0, 0, 0, 1, 0], hat: [1, 1, 1, 1, 1, 1, 1, 1],
+          pad: true, padVol: 0.012 },
+        // 10 · OCEAN ICE — slow and calm, F major, sparse, no snare, soft pad
         { name: 'FROZEN DRIFT', bpm: 88, root: 29, scale: SC_MAJOR, chords: [0, 4, 2, 5],
-          bass: [1, 0, 0, 0, 0, 0, 0, 0], bassOctStep: -1, bassWave: 'sine', bassVol: 0.11, bassDur: 0.6,
-          lead: [4, -1, 2, -1, 0, -1, -1, -1], leadWave: 'sine', leadVol: 0.08, leadDur: 0.7,
-          arp: null, swing: 0,
-          kick: [1, 0, 0, 0, 0, 0, 0, 0], kickVol: 0.3, snare: [0, 0, 0, 0, 0, 0, 0, 0], snareVol: 0, hat: [0, 0, 1, 0, 0, 0, 0, 0], hatVol: 0.035,
-          pad: true, padVol: 0.06, padWave: 'sine' },
-        // 11 · EMERALD GOLD — rich and smooth, Bb major, half-time kick, flowing triangle lead, warm pad, gentle swing
+          bass: [1, 0, 0, 0, 0, 0, 0, 0], bassOctStep: -1, bassWave: 'triangle', bassVol: 0.036,
+          lead: [4, -1, 2, -1, 0, -1, -1, -1], leadWave: 'triangle', leadVol: 0.022,
+          kick: [1, 0, 0, 0, 0, 0, 0, 0], snare: [0, 0, 0, 0, 0, 0, 0, 0], hat: [0, 0, 1, 0, 0, 0, 0, 0],
+          pad: true, padVol: 0.026 },
+        // 11 · EMERALD GOLD — rich and smooth, Bb major, smooth triangle lead + pad
         { name: 'GOLDEN HOUR', bpm: 112, root: 34, scale: SC_MAJOR, chords: [0, 5, 3, 4],
-          bass: [1, 0, 0, 1, 0, 0, 1, 0], bassOctStep: -1, bassWave: 'triangle', bassVol: 0.11, bassDur: 0.3,
-          lead: [2, 4, 4, 2, 5, 4, 2, 0], leadWave: 'triangle', leadVol: 0.075, leadDur: 0.3,
-          arp: null, swing: 0.08,
-          kick: [1, 0, 0, 0, 1, 0, 0, 0], kickVol: 0.32, snare: [0, 0, 0, 0, 1, 0, 0, 0], snareVol: 0.14, hat: [0, 1, 0, 1, 0, 1, 0, 1], hatVol: 0.045,
-          pad: true, padVol: 0.05, padWave: 'triangle' },
-        // 12 · RETRO EARTHY — warm and mellow, G major pentatonic, soft half-time feel, plucky triangle lead, swung
+          bass: [1, 0, 0, 1, 0, 0, 1, 0], bassOctStep: -1, bassWave: 'triangle', bassVol: 0.04,
+          lead: [2, 4, 4, 2, 5, 4, 2, 0], leadWave: 'triangle', leadVol: 0.026,
+          kick: [1, 0, 0, 0, 1, 0, 0, 0], snare: [0, 0, 1, 0, 0, 0, 1, 0], hat: [0, 1, 0, 1, 0, 1, 0, 1],
+          pad: true, padVol: 0.022 },
+        // 12 · RETRO EARTHY — warm and mellow, G major pentatonic, soft half-time feel
         { name: 'COUNTRY ROAD', bpm: 96, root: 43, scale: SC_MAJPENT, chords: [0, 3, 4, 1],
-          bass: [1, 0, 0, 0, 1, 0, 0, 0], bassOctStep: -1, bassWave: 'triangle', bassVol: 0.10, bassDur: 0.3,
-          lead: [2, 1, 0, 1, 2, -1, 1, 0], leadWave: 'triangle', leadVol: 0.07, leadDur: 0.18,
-          arp: null, swing: 0.12,
-          kick: [1, 0, 0, 0, 0, 0, 0, 0], kickVol: 0.3, snare: [0, 0, 0, 0, 1, 0, 0, 0], snareVol: 0.13, hat: [0, 0, 1, 0, 0, 0, 1, 0], hatVol: 0.04,
-          pad: true, padVol: 0.045, padWave: 'triangle' }
+          bass: [1, 0, 0, 0, 1, 0, 0, 0], bassOctStep: -1, bassWave: 'triangle', bassVol: 0.038,
+          lead: [2, 1, 0, 1, 2, -1, 1, 0], leadWave: 'triangle', leadVol: 0.024,
+          kick: [1, 0, 0, 0, 0, 0, 0, 0], snare: [0, 0, 0, 0, 1, 0, 0, 0], hat: [0, 0, 1, 0, 0, 0, 1, 0],
+          pad: true, padVol: 0.018 }
       ];
       var musicBus = null;          // the one gain node every music note runs through
       var currentTrackIdx = -1;     // MUSIC_TRACKS index playing now (or last set while muted)
@@ -1742,27 +1696,17 @@
         if (!musicBus) {
           musicBus = ac.createGain();
           musicBus.gain.value = 1;
-          /* A gentle compressor glues the louder mix and
-             stops the summed peaks clipping at the speakers:
-             loud and punchy, never distorted. Fades still
-             work — they ride the bus gain ahead of it. */
-          var comp = ac.createDynamicsCompressor();
-          comp.threshold.value = -14;
-          comp.knee.value = 20;
-          comp.ratio.value = 5;
-          comp.attack.value = 0.004;
-          comp.release.value = 0.18;
-          musicBus.connect(comp); comp.connect(ac.destination);
+          musicBus.connect(ac.destination);
         }
         return musicBus;
       }
       /* tone() / noiseBurst() twins that play through the
          music bus instead of straight to the destination —
          music only; every SFX call keeps using the originals. */
-      function mTone(freq, dur, type, vol, slideTo, delay) {
+      function mTone(freq, dur, type, vol, slideTo) {
         if (muted) return;
         var ac = audio(); var bus = getMusicBus(); if (!ac || !bus) return;
-        var t = ac.currentTime + (delay || 0);
+        var t = ac.currentTime;
         var o = ac.createOscillator(), g = ac.createGain();
         o.type = type || 'square';
         o.frequency.setValueAtTime(freq, t);
@@ -1772,69 +1716,38 @@
         o.connect(g); g.connect(bus);
         o.start(t); o.stop(t + dur + 0.02);
       }
-      /* Noise buffers, cached: the old code built a fresh
-         AudioBuffer (and filled it with Math.random) on
-         EVERY hat and snare hit — pure allocation churn on
-         the main thread, several times a second. A few
-         pre-built buffers per length, rotated round-robin,
-         sound the same and cost nothing per hit. */
-      var noiseBufs = {}, noiseBufIdx = {};
-      function noiseBuf(dur) {
-        var ac = audio(); if (!ac) return null;
-        var key = Math.round(dur * 1000);
-        var list = noiseBufs[key];
-        if (!list) {
-          list = [];
-          for (var v = 0; v < 4; v++) {
-            var len = Math.max(1, Math.floor(ac.sampleRate * dur));
-            var buf = ac.createBuffer(1, len, ac.sampleRate);
-            var d = buf.getChannelData(0);
-            for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
-            list.push(buf);
-          }
-          noiseBufs[key] = list; noiseBufIdx[key] = 0;
-        }
-        var b = list[noiseBufIdx[key] % 4]; noiseBufIdx[key]++;
-        return b;
-      }
-      function mNoise(dur, vol, freq, type, delay) {
+      function mNoise(dur, vol, freq, type) {
         if (muted) return;
         var ac = audio(); var bus = getMusicBus(); if (!ac || !bus) return;
-        var buf = noiseBuf(dur); if (!buf) return;
+        var len = Math.max(1, Math.floor(ac.sampleRate * dur));
+        var buf = ac.createBuffer(1, len, ac.sampleRate);
+        var d = buf.getChannelData(0);
+        for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
         var src = ac.createBufferSource(); src.buffer = buf;
         var g = ac.createGain(); g.gain.value = vol || 0.16;
         var f = ac.createBiquadFilter(); f.type = type || 'lowpass'; f.frequency.value = freq || 1600;
         src.connect(f); f.connect(g); g.connect(bus);
-        src.start(ac.currentTime + (delay || 0));
+        src.start();
       }
       function scheduleMusicStep(tr) {
         if (muted) return;
         var s = musicStep % 32;             // 4 bars × 8 eighths
         var bar = Math.floor(s / 8), st = s % 8;
         var chordDeg = tr.chords[bar];
-        var stepDur = 60 / tr.bpm / 2;      // one eighth note, seconds
-        /* Swung tracks land their off-8th notes late — the
-           groove, not just the tempo, differs per track. */
-        var swing = (st % 2 === 1) ? (tr.swing || 0) * stepDur : 0;
-        if (tr.kick[st]) mTone(150, 0.16, 'sine', tr.kickVol || 0.34, 40, swing);   // kick: pitch-drop punch
-        if (tr.snare[st]) mNoise(0.09, tr.snareVol || 0.16, 1800, 'lowpass', swing); // snare
-        if (tr.hat[st]) mNoise(0.03, tr.hatVol || 0.05, 7000, 'highpass', swing);    // hat
+        if (tr.kick[st]) mTone(130, 0.13, 'sine', 0.15, 42);              // kick
+        if (tr.snare[st]) mNoise(0.09, 0.05, 1600);                       // snare
+        if (tr.hat[st]) mNoise(0.03, 0.02, 6000, 'highpass');             // hat
         if (tr.bass[st]) {
           var bDeg = chordDeg + (st === tr.bassOctStep ? tr.scale.length : 0);
-          mTone(trackFreq(tr, bDeg, 0), tr.bassDur || 0.19, tr.bassWave, tr.bassVol, 0, swing);  // bass
+          mTone(trackFreq(tr, bDeg, 0), 0.19, tr.bassWave, tr.bassVol);   // bass
         }
         var leadOff = tr.lead[st];
-        if (leadOff >= 0) mTone(trackFreq(tr, chordDeg + leadOff, 2), tr.leadDur || 0.16, tr.leadWave, tr.leadVol, 0, swing);  // lead
-        if (tr.arp) {   // arpeggio: short notes on the off-16th, between the eighth steps
-          var arpOff = tr.arp[st];
-          if (arpOff >= 0) mTone(trackFreq(tr, chordDeg + arpOff, 2), 0.07, tr.arpWave || 'square', tr.arpVol || 0.04, 0, swing + stepDur / 2);
-        }
+        if (leadOff >= 0) mTone(trackFreq(tr, chordDeg + leadOff, 2), 0.16, tr.leadWave, tr.leadVol);  // lead
         if (st === 0 && tr.pad) {                                          // pad swell
           var barDur = (60 / tr.bpm) * 4;
-          var pw = tr.padWave || 'triangle';
-          mTone(trackFreq(tr, chordDeg, 1), barDur, pw, tr.padVol, 0, 0);
-          mTone(trackFreq(tr, chordDeg + 2, 1), barDur, pw, tr.padVol * 0.8, 0, 0);
-          mTone(trackFreq(tr, chordDeg + 4, 1), barDur, pw, tr.padVol * 0.8, 0, 0);
+          mTone(trackFreq(tr, chordDeg, 1), barDur, 'triangle', tr.padVol);
+          mTone(trackFreq(tr, chordDeg + 2, 1), barDur, 'triangle', tr.padVol * 0.8);
+          mTone(trackFreq(tr, chordDeg + 4, 1), barDur, 'triangle', tr.padVol * 0.8);
         }
         musicStep++;
       }
@@ -1995,39 +1908,13 @@
         th._lat = ctx.createPattern(c, 'repeat');
         return th._lat;
       }
-      /* Spike / triangle fills, cached per theme: a gradient
-         object is created once per (theme, shape) and reused
-         every frame. Coordinates are LOCAL — the caller
-         translates to the shape first — so one cached
-         gradient paints every spike of that height in the
-         theme, instead of a fresh gradient per spike per
-         frame (the old code made up to ~35 a frame in the
-         dense zig-zag sections, mid-level). The stops match
-         the old per-spike gradient exactly: dark at the
-         base, full spike colour at the tip. */
-      function spikeFill(th, dir, h) {
-        if (!th._sg) th._sg = {};
-        var key = dir + ':' + h;
-        var g = th._sg[key];
-        if (!g) {
-          var tip = dir === 'up' ? -h : h;
-          g = ctx.createLinearGradient(0, 0, 0, tip);
-          g.addColorStop(0, shade(th.spike, 0.45));
-          g.addColorStop(1, th.spike);
-          th._sg[key] = g;
-        }
-        return g;
-      }
-      function triFill(th, tx, ty) {
-        if (!th._tg) th._tg = {};
-        var key = Math.round(tx / 4) + ':' + Math.round(ty / 4);
-        var g = th._tg[key];
-        if (!g) {
-          g = ctx.createLinearGradient(0, 0, tx, ty);
-          g.addColorStop(0, shade(th.spike, 0.45));
-          g.addColorStop(1, th.spike);
-          th._tg[key] = g;
-        }
+      /* Spike fill, as in the original: near-black at the base,
+         fading into the level colour at the tip. */
+      function spikeGrad(th, x0, y0, x1, y1) {
+        var g = ctx.createLinearGradient(x0, y0, x1, y1);
+        g.addColorStop(0, '#060607');
+        g.addColorStop(0.55, shade(th.tun, 0.38));
+        g.addColorStop(1, shade(th.tun, 1.45));
         return g;
       }
       /* Paint the DOM (menu, shop, HUD) in a theme: the CSS
@@ -3071,8 +2958,13 @@
          ★ SERVER-DRIVEN AD CONFIG ★ — nothing about ads is set in
          this file. On load the game fetches GET /ads from the gift
          Worker (see applyServerAds() in the server-sync block);
-         the admin panel saves { adsEnabled, network, bannerCode,
-         nativeCode, socialBarCode, directLink } there. Until that
+         the admin panel saves the nested config there —
+         { adsEnabled, network,
+           adsterra: { nativeCode, socialBarCode, directLink },
+           monetag: { inPagePushCode, vignetteCode, smartLink } },
+         responsive-only formats, with each network's codes kept
+         separate and generic fields honoured only as fallbacks
+         (see applyServerAds() for the full slot mapping). Until that
          answer arrives — and whenever it fails, is missing, or
          has adsEnabled off — AD_CONFIG stays in its default
          "ads off" state: no ad code is injected anywhere and the
@@ -3259,9 +3151,6 @@
         if (mode === 'endless') endless = { obs: [], genX: 1000 };
         resetPlayer(0);
         state = 'playing';
-        /* Every run loads with the ads shown first — a bar
-           hidden in an earlier run never leaks into this one. */
-        resetAdBars();
         startTime = performance.now();
         menuEl.classList.add('hidden');
         overlayEl.classList.add('hidden');
@@ -3555,8 +3444,6 @@
         hud.classList.add('hidden');
         holdHintEl.classList.add('hidden');
         menuEl.classList.remove('hidden');
-        /* Back on the menu, the ads show first again too. */
-        resetAdBars();
         buildLevelGrid();
         /* Menu music = the equipped theme's track, or
            Theme 1's when Auto / nothing is pinned. */
@@ -3796,23 +3683,16 @@
         }
       }
 
-      /* The HUD text / bar are recomputed every frame — but
-         the DOM is only touched when the shown value actually
-         changes (whole percent points), so a steady run costs
-         no style recalc or layout per frame. */
-      var lastHudPct = null, lastHudBar = null;
       function updateHUD(p) {
         updateTrialBadge();
-        var txt, w;
         if (mode === 'endless') {
-          txt = Math.floor(player.x / 50) + 'm';
-          w = Math.floor(Math.min(100, (player.x % 5000) / 50)) + '%';
+          var m = Math.floor(player.x / 50);
+          pctEl.textContent = m + 'm';
+          barEl.style.width = Math.min(100, (player.x % 5000) / 50) + '%';
         } else {
-          txt = p + '%';
-          w = p + '%';
+          pctEl.textContent = p + '%';
+          barEl.style.width = p + '%';
         }
-        if (txt !== lastHudPct) { lastHudPct = txt; pctEl.textContent = txt; }
-        if (w !== lastHudBar) { lastHudBar = w; barEl.style.width = w; }
       }
 
       /* ---------------- Draw ---------------- */
@@ -4113,52 +3993,6 @@
           ctx.lineWidth = lw;
         }
       }
-      /* Block-edge glow, pre-rendered: the neon edge stroke
-         (colour glow + white core) for one block shape is
-         painted ONCE into a small offscreen sprite and then
-         stamped with drawImage each frame — pixel for pixel
-         the same glow neonStroke used to paint (same
-         lineWidth, same shadowBlur, same colours, drawn at
-         the same scale), but the shadowBlur raster work
-         happens once per shape, not once per block per
-         frame. That per-block shadow was the whole
-         mid-level lag: in the dense zig-zag sections ~50
-         blocks each paid a full shadowed stroke and the
-         frame doubled to ~30 ms. Shapes repeat constantly
-         (zig steps, tunnel rects), so the cache stays
-         small; it is keyed by theme + scale + shape, and
-         flushed if it ever grows past 48 entries. Each
-         block still draws its sprite in its original
-         order, right after its own fill, so the layering
-         is exactly as before. */
-      var glowSprites = {};
-      var glowSpriteCount = 0;
-      function glowSprite(th, key, w, h, build) {
-        var skey = THEMES.indexOf(th) + '|' + SCALE.toFixed(2) + '|' + fxBlur(14) + '|' + key;
-        var s = glowSprites[skey];
-        if (s) return s;
-        if (glowSpriteCount > 48) { glowSprites = {}; glowSpriteCount = 0; }
-        var pad = Math.ceil(fxBlur(14)) + 3;
-        var cv = document.createElement('canvas');
-        cv.width = Math.max(2, Math.ceil((w + pad * 2) * SCALE));
-        cv.height = Math.max(2, Math.ceil((h + pad * 2) * SCALE));
-        var g = cv.getContext('2d');
-        g.scale(SCALE, SCALE);
-        g.translate(pad, pad);
-        g.lineWidth = 2.5;
-        g.lineJoin = 'round';
-        g.strokeStyle = th.edge;
-        g.shadowColor = th.edge;
-        g.shadowBlur = fxBlur(14);
-        build(g);
-        g.shadowBlur = 0;
-        g.strokeStyle = '#ffffff';
-        g.lineWidth = 1.1;
-        build(g);
-        s = { cv: cv, pad: pad, w: w + pad * 2, h: h + pad * 2 };
-        glowSprites[skey] = s; glowSpriteCount++;
-        return s;
-      }
       /* White glyphs stamped into lattice blocks, as in the
          original: a gear/saw symbol in a tile, an inverted-V
          or W chevron in a floor trap, a diagonal cross, or a
@@ -4202,23 +4036,15 @@
          set in the theme's palette. */
       function drawRect(o, th) {
         ctx.save();
-        /* One fill only: the pattern tile already paints the
-           block colour as its background (see paintPattern),
-           so the solid fill underneath it was pure waste —
-           one whole fill per block, every frame. The neon
-           edge is a pre-rendered glow sprite (see
-           glowSprite) — the same lines neonStroke used to
-           paint, stamped with drawImage instead of a fresh
-           shadowed stroke per block per frame. */
+        ctx.fillStyle = th.block;
+        ctx.fillRect(o.x, o.y, o.w, o.h);
         ctx.fillStyle = patternOf(th, false);
         ctx.fillRect(o.x, o.y, o.w, o.h);
         if (o.glyph) drawGlyph(o, th);
-        var gs = glowSprite(th, 'r' + o.w + 'x' + o.h, o.w, o.h, function (g) {
-          g.beginPath();
-          g.rect(1.25, 1.25, Math.max(0, o.w - 2.5), Math.max(0, o.h - 2.5));
-          g.stroke();
-        });
-        ctx.drawImage(gs.cv, o.x - gs.pad, o.y - gs.pad, gs.w, gs.h);
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.rect(o.x + 1.25, o.y + 1.25, Math.max(0, o.w - 2.5), Math.max(0, o.h - 2.5));
+        neonStroke(th.edge, '#ffffff');
         ctx.restore();
       }
       function drawPoly(o, th) {
@@ -4228,60 +4054,34 @@
         ctx.moveTo(pts[0][0], pts[0][1]);
         for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
         ctx.closePath();
-        /* Pattern fill only — same one-fill saving as
-           drawRect: the tile already carries the block
-           colour, so no solid fill underneath. The edge is
-           the pre-rendered glow sprite for this polygon
-           shape (see glowSprite). */
+        ctx.fillStyle = th.block;
+        ctx.fill();
         ctx.fillStyle = patternOf(th, false);
         ctx.fill();
-        var mnx = Infinity, mny = Infinity, mxx = -Infinity, mxy = -Infinity;
-        for (var i = 0; i < pts.length; i++) {
-          if (pts[i][0] < mnx) mnx = pts[i][0];
-          if (pts[i][0] > mxx) mxx = pts[i][0];
-          if (pts[i][1] < mny) mny = pts[i][1];
-          if (pts[i][1] > mxy) mxy = pts[i][1];
-        }
-        var rel = [];
-        for (var i = 0; i < pts.length; i++) rel.push([Math.round(pts[i][0] - mnx), Math.round(pts[i][1] - mny)]);
-        var gs = glowSprite(th, 'p' + rel.map(function (p) { return p[0] + ',' + p[1]; }).join(';'), mxx - mnx, mxy - mny, function (g) {
-          g.beginPath();
-          g.moveTo(rel[0][0], rel[0][1]);
-          for (var k = 1; k < rel.length; k++) g.lineTo(rel[k][0], rel[k][1]);
-          g.closePath();
-          g.stroke();
-        });
-        ctx.drawImage(gs.cv, mnx - gs.pad, mny - gs.pad, gs.w, gs.h);
+        ctx.lineWidth = 2.5;
+        ctx.lineJoin = 'round';
+        neonStroke(th.edge, '#ffffff');
         ctx.restore();
       }
       function drawSpike(o, th) {
         var tipY = o.dir === 'up' ? o.baseY - o.h : o.baseY + o.h;
         ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(o.x, o.baseY);
+        ctx.lineTo(o.x + o.w / 2, tipY);
+        ctx.lineTo(o.x + o.w, o.baseY);
+        ctx.closePath();
         /* Reference spikes: solid triangles in the theme's
            spike colour, dark at the base, bright at the tip,
            with a crisp light outline. On touch devices a flat
            fill of the same spike colour stands in for the
-           gradient (spikes are the most numerous solid). On
-           desktop the gradient is cached per theme + height
-           in spike-local coordinates (see spikeFill) — the
-           fill paints identically, but a dense spike strip
-           no longer pays a fresh gradient object per spike,
-           per frame. */
-        if (MOBILE_FX) {
-          ctx.beginPath();
-          ctx.moveTo(o.x, o.baseY);
-          ctx.lineTo(o.x + o.w / 2, tipY);
-          ctx.lineTo(o.x + o.w, o.baseY);
-          ctx.closePath();
-          ctx.fillStyle = th.spike;
-        } else {
-          ctx.translate(o.x + o.w / 2, o.baseY);
-          ctx.beginPath();
-          ctx.moveTo(-o.w / 2, 0);
-          ctx.lineTo(0, tipY - o.baseY);
-          ctx.lineTo(o.w / 2, 0);
-          ctx.closePath();
-          ctx.fillStyle = spikeFill(th, o.dir, o.h);
+           gradient (spikes are the most numerous solid). */
+        if (MOBILE_FX) ctx.fillStyle = th.spike;
+        else {
+          var sg = ctx.createLinearGradient(o.x + o.w / 2, o.baseY, o.x + o.w / 2, tipY);
+          sg.addColorStop(0, shade(th.spike, 0.45));
+          sg.addColorStop(1, th.spike);
+          ctx.fillStyle = sg;
         }
         ctx.fill();
         ctx.strokeStyle = '#ffffff';
@@ -4296,25 +4096,17 @@
         var pts = o.pts;
         var gx = (pts[0][0] + pts[1][0] + pts[2][0]) / 3, gy = (pts[0][1] + pts[1][1] + pts[2][1]) / 3;
         ctx.save();
-        /* Same dark-centroid to bright-tip blend as the old
-           per-triangle gradient, but the gradient is cached
-           per theme in triangle-local coordinates (see
-           triFill) — the zig-zag teeth no longer pay a fresh
-           gradient object per triangle, per frame. */
-        if (!MOBILE_FX) ctx.translate(gx, gy);
         ctx.beginPath();
-        if (MOBILE_FX) {
-          ctx.moveTo(pts[0][0], pts[0][1]);
-          for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
-        } else {
-          for (var i = 0; i < pts.length; i++) {
-            var rx = pts[i][0] - gx, ry = pts[i][1] - gy;
-            if (i === 0) ctx.moveTo(rx, ry); else ctx.lineTo(rx, ry);
-          }
-        }
+        ctx.moveTo(pts[0][0], pts[0][1]);
+        for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
         ctx.closePath();
         if (MOBILE_FX) ctx.fillStyle = th.spike;
-        else ctx.fillStyle = triFill(th, pts[2][0] - gx, pts[2][1] - gy);
+        else {
+          var tg = ctx.createLinearGradient(gx, gy, pts[2][0], pts[2][1]);
+          tg.addColorStop(0, shade(th.spike, 0.45));
+          tg.addColorStop(1, th.spike);
+          ctx.fillStyle = tg;
+        }
         ctx.fill();
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
@@ -4331,9 +4123,8 @@
           // the original: a white-edged lattice square behind
           // the blade.
           var s = o.r * 2.1;
-          /* Pattern fill only — the tile already carries
-             the block colour (same one-fill saving as
-             drawRect / drawPoly). */
+          ctx.fillStyle = th.block;
+          ctx.fillRect(-s / 2, -s / 2, s, s);
           ctx.fillStyle = patternOf(th, false);
           ctx.fillRect(-s / 2, -s / 2, s, s);
           ctx.strokeStyle = '#ffffff';
@@ -5995,41 +5786,12 @@
       var nativeHideArmed = false;  // the native strip's × has been armed (once)
 
       function refreshShowAdsBtn() {
-        var socialGone = socialBarEl.classList.contains('barGone');
-        var nativeGone = gameNativeBarEl.classList.contains('barGone');
-        var anyGone = socialGone || nativeGone;
+        var anyGone = socialBarEl.classList.contains('barGone') || gameNativeBarEl.classList.contains('barGone');
         showAdsBtnEl.classList.toggle('hidden', !anyGone);
-        /* The pill floats bottom-right — but parked in the
-           corner it would cover the × of a bar that is
-           still showing (the × sits top-right of its bar,
-           ~14–46 px above the bottom edge), so after hiding
-           one bar the other could never be hidden: a tap
-           there would hit the pill instead and restore the
-           first bar. While any bar is still visible the
-           pill rides above the bars; once both are hidden
-           it drops back to the corner. */
-        showAdsBtnEl.classList.toggle('pillUp', anyGone && (!socialGone || !nativeGone));
       }
       function hideAdBar(barEl) {
         barEl.classList.add('barGone');
         refreshShowAdsBtn();
-      }
-      /* Ads SHOW FIRST on every load: a bar hidden with × in
-         one run must not stay hidden into the next run (or
-         back on the menu) with the SHOW ADS pill already
-         showing — each fresh run and each return to the menu
-         starts with both bars shown and no pill. Hiding still
-         lasts for the rest of the run it happened in, and it
-         is still visual only (see hideAdBar). The native
-         strip's × re-arms for the new run, fading in ~3 s
-         after the strip appears, exactly as on first load. */
-      function resetAdBars() {
-        socialBarEl.classList.remove('barGone');
-        gameNativeBarEl.classList.remove('barGone');
-        gameNativeBarEl.classList.remove('canHide');
-        refreshShowAdsBtn();
-        nativeHideArmed = true;
-        setTimeout(function () { gameNativeBarEl.classList.add('canHide'); }, 3000);
       }
       document.getElementById('socialBarHide').addEventListener('click', function () { hideAdBar(socialBarEl); });
       document.getElementById('gameNativeHide').addEventListener('click', function () { hideAdBar(gameNativeBarEl); });
@@ -6038,10 +5800,13 @@
         gameNativeBarEl.classList.remove('barGone');
         refreshShowAdsBtn();
       });
-      /* AdSense-style: the social bar's × fades in a few seconds
-         after the bar first appears — the bar is on screen from
-         page load, on the menu, in the shop and during a run. */
-      setTimeout(function () { socialBarEl.classList.add('canHide'); }, 3000);
+      /* The social bar's × is armed the moment the bar appears
+         — the bar is on screen from page load, on the menu, in
+         the shop and during a run, and the × must be visible
+         and tappable right away: on a phone there is no hover
+         to reveal it, and a delayed fade-in left it
+         unreachable. (It used to arm after a 3-second delay.) */
+      socialBarEl.classList.add('canHide');
 
       /* The native strip rides along with a run: on screen while
          the HUD is up (playing, paused, or the brief death
@@ -6049,8 +5814,7 @@
          game-over screens. Called every frame from the main
          loop; it only touches the DOM when the in-run state
          actually flips, and the first time the strip appears its
-         × arms a few seconds later, exactly like the social
-         bar's. */
+         × is armed at once, exactly like the social bar's. */
       function syncAdBars() {
         var inRun = (state === 'playing' || state === 'paused' || state === 'dead');
         if (inRun === nativeBarInRun) return;
@@ -6058,25 +5822,54 @@
         gameNativeWrapEl.classList.toggle('hidden', !inRun);
         if (inRun && !nativeHideArmed) {
           nativeHideArmed = true;
-          setTimeout(function () { gameNativeBarEl.classList.add('canHide'); }, 3000);
+          gameNativeBarEl.classList.add('canHide');
         }
       }
 
       /* ---------------- Server ads: GET /ads ----------------
-         The ad config the admin panel saves:
+         RESPONSIVE-ONLY formats. The ad config the admin panel
+         saves is NESTED, with the two networks' codes kept
+         separate:
            { adsEnabled, network ("adsterra" | "monetag"),
-             bannerCode, nativeCode, socialBarCode, directLink }
+             adsterra: { nativeCode, socialBarCode, directLink },
+             monetag: { inPagePushCode, vignetteCode, smartLink } }
          (the payload itself, or wrapped as { ads: {...} }).
+         Generic fallback fields (bannerCode, nativeCode,
+         socialBarCode, directLink) on a network object are still
+         honoured via firstNonEmpty() fallbacks below. Older flat
+         configs ({ adsEnabled, network, bannerCode, nativeCode,
+         socialBarCode, directLink } at the top level) are still
+         honoured as a fallback when the selected network's
+         nested object is absent — the same mapping is applied
+         against the top-level fields, so the menu banner falls
+         back to the flat bannerCode when nativeCode is empty.
+         popunderCode / multiTagCode are ignored — never read
+         and never injected; no popunder, push, or MultiTag code
+         is ever injected into the page head.
          Anything else — fetch failed, nothing saved, malformed,
          adsEnabled not true — leaves AD_CONFIG in its default
          "ads off" state: nothing is injected and no "watch ad"
          button is shown, and the game plays exactly as before.
-         When ads ARE enabled: bannerCode goes into the menu's
-         banner slot, nativeCode into the shop's native slot AND
-         the in-game native strip, socialBarCode into the
-         on-screen social bar's slot at the bottom edge, and
-         directLink drives the watch-ad flow in showAd()
-         (empty link = the 10-second DEMO AD countdown only). */
+         When ads ARE enabled the selected network resolves to
+         four slots: the responsive menu-banner code goes into
+         the menu's banner slot, the native code into the shop's
+         native slot AND the in-game native strip, the social-bar
+         code into the on-screen social bar's slot at the bottom
+         edge, and the direct link drives the watch-ad flow in
+         showAd() (empty link = the 10-second DEMO AD countdown
+         only). The menu banner slot renders the selected
+         network's RESPONSIVE code, not a fixed-size banner.
+         Monetag resolution: menu banner = vignetteCode
+         (fallback bannerCode), shop native + gameplay native
+         strip = inPagePushCode (fallback nativeCode) — the same
+         In-Page Push code feeds the shop slot and the gameplay
+         strip — social bar = inPagePushCode (fallback
+         socialBarCode), and direct link = smartLink (fallback
+         directLink).
+         Adsterra resolution: menu banner AND both native slots
+         = nativeCode (fallback bannerCode) — the menu banner no
+         longer uses a fixed bannerCode — social bar =
+         socialBarCode, and direct link = directLink. */
       function injectAdCode(el, code) {
         if (!el || typeof code !== 'string' || !code.trim()) return;
         el.innerHTML = code;
@@ -6126,17 +5919,56 @@
           socialBarSlotEl.appendChild(inline);
         }
       }
+      function firstNonEmpty() {
+        for (var i = 0; i < arguments.length; i++) {
+          var v = arguments[i];
+          if (typeof v === 'string' && v.trim()) return v;
+        }
+        return '';
+      }
       function applyServerAds(data) {
         if (!data || typeof data !== 'object') return;   // fetch failed / nothing saved — ads stay off
         var a = (data.ads && typeof data.ads === 'object') ? data.ads : data;
         if (a.adsEnabled !== true) return;               // ads off — nothing injected, no watch-ad buttons
         AD_CONFIG.enabled = true;
-        AD_CONFIG.network = (typeof a.network === 'string') ? a.network : '';
-        AD_CONFIG.directLink = (typeof a.directLink === 'string') ? a.directLink : '';
-        injectAdCode(document.getElementById('menuBannerSlot'), a.bannerCode);
-        injectAdCode(document.getElementById('shopNativeSlot'), a.nativeCode);
-        injectAdCode(gameNativeSlotEl, a.nativeCode);
-        injectSocialBar(a.socialBarCode);
+        var network = (typeof a.network === 'string' && a.network.trim())
+          ? a.network.trim().toLowerCase() : 'adsterra';
+        AD_CONFIG.network = network;
+        var net = (a[network] && typeof a[network] === 'object') ? a[network] : null;
+        var bannerCode, nativeCode, socialBarCode, directLink;
+        if (!net) {
+          /* No nested object for the selected network — apply
+             the same responsive-only mapping against the old
+             flat config's top-level fields: the menu banner
+             falls back to the flat bannerCode when nativeCode
+             is empty. popunderCode / multiTagCode are ignored
+             here too — never read, never injected. */
+          bannerCode = firstNonEmpty(a.vignetteCode, a.nativeCode, a.bannerCode);
+          nativeCode = firstNonEmpty(a.inPagePushCode, a.nativeCode, a.bannerCode);
+          socialBarCode = firstNonEmpty(a.inPagePushCode, a.socialBarCode);
+          directLink = firstNonEmpty(a.smartLink, a.directLink);
+        } else if (network === 'monetag') {
+          bannerCode = firstNonEmpty(net.vignetteCode, net.bannerCode);
+          socialBarCode = firstNonEmpty(net.inPagePushCode, net.socialBarCode);
+          nativeCode = firstNonEmpty(net.inPagePushCode, net.nativeCode);
+          directLink = firstNonEmpty(net.smartLink, net.directLink);
+          /* popunderCode / multiTagCode are ignored — never
+             read and never injected into the page head. */
+        } else {
+          /* Adsterra (and any other named network object):
+             responsive-only — the menu banner AND both native
+             slots use nativeCode (fallback bannerCode); the
+             menu banner no longer uses a fixed bannerCode. */
+          bannerCode = firstNonEmpty(net.nativeCode, net.bannerCode);
+          nativeCode = firstNonEmpty(net.nativeCode, net.bannerCode);
+          socialBarCode = net.socialBarCode;
+          directLink = (typeof net.directLink === 'string') ? net.directLink : '';
+        }
+        AD_CONFIG.directLink = directLink;
+        injectAdCode(document.getElementById('menuBannerSlot'), bannerCode);
+        injectAdCode(document.getElementById('shopNativeSlot'), nativeCode);
+        injectAdCode(gameNativeSlotEl, nativeCode);
+        injectSocialBar(socialBarCode);
         /* Trial buttons appear if the shop is already open; the
            revive button reads adsEnabled() when the death screen
            is built, so it follows automatically. */
